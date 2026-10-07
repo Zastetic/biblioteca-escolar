@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Acervo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --ink:#111111;
+    --muted:#8a8a8a;
+    --line:#e5e5e5;
+    --accent:#111111;
+    --display:'Fraunces', Georgia, serif;
+    --sans:'Inter', system-ui, sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ===== masthead ===== */
+  .masthead{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    padding:36px 56px 22px;border-bottom:2px solid var(--ink);
+  }
+  .masthead .name{font-family:var(--display);font-weight:400;font-size:clamp(28px,3.4vw,44px);letter-spacing:-.02em;line-height:1}
+  .masthead .name sup{font-size:.35em;font-weight:300;vertical-align:super;margin-left:4px}
+  .masthead .meta{text-align:right;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);line-height:2}
+  .masthead .meta .user{color:var(--ink);font-weight:500}
+  /* ===== subnav ===== */
+  .subnav{
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+    padding:16px 56px;border-bottom:1px solid var(--line);
+  }
+  .search{
+    flex:1;max-width:420px;display:flex;align-items:center;gap:12px;
+    border-bottom:1px solid var(--ink);padding-bottom:6px;
+  }
+  .search span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .search input{
+    flex:1;border:none;outline:none;font-family:var(--sans);font-size:14px;color:var(--ink);
+    background:transparent;
+  }
+  .genres{display:flex;gap:18px}
+  .genres a{
+    font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    text-decoration:none;padding-bottom:3px;transition:color .15s;
+  }
+  .genres a:hover,.genres a.on{color:var(--ink);border-bottom:1px solid var(--ink)}
+  /* ===== sections ===== */
+  main{padding:44px 56px 70px;max-width:1280px;margin:0 auto}
+  .count{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:40px}
+  .count b{color:var(--ink);font-weight:500}
+  section{margin-bottom:56px}
+  .sec-head{
+    display:flex;align-items:center;gap:16px;margin-bottom:26px;
+  }
+  .sec-head h2{
+    font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:-.01em;
+  }
+  .sec-head .rule{flex:1;height:1px;background:var(--line)}
+  .sec-head .n{font-size:10.5px;letter-spacing:.16em;color:var(--muted)}
+  .row{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:44px 30px;
+  }
+  .book{display:flex;flex-direction:column}
+  .cover{
+    position:relative;aspect-ratio:2/3;
+    background:
+      linear-gradient(155deg, rgba(255,255,255,.1), transparent 42%),
+      var(--c);
+    transition:transform .25s ease, box-shadow .25s ease;
+    cursor:pointer;
+  }
+  .cover::after{
+    content:"";position:absolute;inset:0;border:1px solid rgba(0,0,0,.12);
+  }
+  .book:hover .cover{
+    transform:scale(1.025);
+    box-shadow:0 18px 36px rgba(0,0,0,.16);
+  }
+  .cover .idx{
+    position:absolute;top:10px;left:12px;font-size:9.5px;letter-spacing:.14em;
+    color:rgba(255,255,255,.75);font-family:var(--sans);
+  }
+  .book .t{
+    font-family:var(--display);font-size:14.5px;line-height:1.3;font-weight:400;
+    margin-top:14px;color:var(--muted);transition:color .2s;
+  }
+  .book:hover .t{color:var(--ink)}
+  .book .a{
+    font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    margin-top:5px;
+  }
+  .book .d{
+    font-size:10.5px;color:var(--muted);margin-top:7px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .book .d .dot{width:5px;height:5px;border-radius:50%;background:#1a1a1a}
+  .book .d.off .dot{background:#d4d4d4}
+  footer{
+    border-top:1px solid var(--line);padding:22px 56px;
+    display:flex;justify-content:space-between;font-size:10.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="name">Biblioteca Escolar<sup>®</sup></div>
+  <div class="meta">
+    <div class="user">RA 12.3456 · Entrar</div>
+    <div>Catálogo 2026 — 12 obras</div>
+  </div>
+</div>
+
+<div class="subnav">
+  <div class="search">
+    <span>Busca</span>
+    <input placeholder="Título, autor…">
+  </div>
+  <div class="genres">
+    <a class="on" href="#">Todos</a>
+    <a href="#">Romance</a>
+    <a href="#">Mistério</a>
+    <a href="#">Fantasia</a>
+    <a href="#">Clássicos</a>
+  </div>
+</div>
+
+<main>
+  <div class="count"><b>12 obras</b> no acervo · <b>9</b> disponíveis para empréstimo</div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Clássicos</h2>
+      <div class="rule"></div><span class="n">04</span>
+    </div>
+    <div class="row">
+      <div class="book">
+        <div class="cover" style="--c:#6b4a2b"><span class="idx">01</span></div>
+        <div class="t">Memórias Póstumas de Brás Cubas</div>
+        <div class="a">Machado de Assis · 1881</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#7a4a2b"><span class="idx">02</span></div>
+        <div class="t">Dom Casmurro</div>
+        <div class="a">Machado de Assis · 1899</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#4a3f35"><span class="idx">03</span></div>
+        <div class="t">Grande Sertão: Veredas</div>
+        <div class="a">Guimarães Rosa · 1956</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#262626"><span class="idx">04</span></div>
+        <div class="t">1984</div>
+        <div class="a">George Orwell · 1949</div>
+        <div class="d off"><span class="dot"></span>Emprestado</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Romance</h2>
+      <div class="rule"></div><span class="n">03</span>
+    </div>
+    <div class="row">
+      <div class="book">
+        <div class="cover" style="--c:#8c5a2b"><span class="idx">05</span></div>
+        <div class="t">O Cortiço</div>
+        <div class="a">Aluísio Azevedo · 1890</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#b04a5a"><span class="idx">06</span></div>
+        <div class="t">É Assim que Acaba</div>
+        <div class="a">Colleen Hoover · 2016</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#8a2b2b"><span class="idx">07</span></div>
+        <div class="t">A Menina que Roubava Livros</div>
+        <div class="a">Markus Zusak · 2005</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Fantasia &amp; Aventura</h2>
+      <div class="rule"></div><span class="n">03</span>
+    </div>
+    <div class="row">
+      <div class="book">
+        <div class="cover" style="--c:#3b2f63"><span class="idx">08</span></div>
+        <div class="t">Harry Potter e a Pedra Filosofal</div>
+        <div class="a">J.K. Rowling · 1997</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#5a3d1a"><span class="idx">09</span></div>
+        <div class="t">O Senhor dos Anéis</div>
+        <div class="a">J.R.R. Tolkien · 1954</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#1e4d8c"><span class="idx">10</span></div>
+        <div class="t">Percy Jackson e o Ladrão de Raios</div>
+        <div class="a">Rick Riordan · 2005</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Mistério &amp; Juvenil</h2>
+      <div class="rule"></div><span class="n">02</span>
+    </div>
+    <div class="row">
+      <div class="book">
+        <div class="cover" style="--c:#1d5c46"><span class="idx">11</span></div>
+        <div class="t">Um Estudo em Vermelho</div>
+        <div class="a">Arthur Conan Doyle · 1887</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+      <div class="book">
+        <div class="cover" style="--c:#2e6e8e"><span class="idx">12</span></div>
+        <div class="t">O Pequeno Príncipe</div>
+        <div class="a">Antoine de Saint-Exupéry · 1943</div>
+        <div class="d"><span class="dot"></span>Disponível</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Biblioteca Escolar</span>
+  <span>Empréstimo via RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>

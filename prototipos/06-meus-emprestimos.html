@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Meus empréstimos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+</head>
+<body>
+
+<div class="ribbon">Secretaria de Educação · Acervo aberto · Devolução em até 14 dias</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Área do leitor · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    RA 12.3456 · Leitor<br>
+    <button class="theme-toggle" onclick="biblioToggleTema()" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="01-catalogo-classico.html">← Catálogo</a></div>
+
+  <div class="page-head">
+    <div>
+      <h2>Meus empréstimos</h2>
+      <div class="sub">2 empréstimos ativos · 1 devolvido</div>
+    </div>
+    <div class="right">
+      Limite: <b>3 livros</b> (configurável)<br>
+      Você pode pegar <b>mais 1 livro</b>
+    </div>
+  </div>
+
+  <div class="card" style="padding:10px 30px">
+    <div class="list-item">
+      <div class="cover sm" style="--c:#8c5a2b"><div class="t">O Cortiço</div></div>
+      <div class="info">
+        <div class="t">O Cortiço</div>
+        <div class="a">Aluísio Azevedo</div>
+        <div class="d">Emprestado em <b>28/07/2026</b> · devolução prevista para <b>11/08/2026</b></div>
+      </div>
+      <span class="badge ativo">Ativo</span>
+    </div>
+
+    <div class="list-item">
+      <div class="cover sm" style="--c:#262626"><div class="t">1984</div></div>
+      <div class="info">
+        <div class="t">1984</div>
+        <div class="a">George Orwell</div>
+        <div class="d" style="color:var(--stamp)">Emprestado em <b>20/07/2026</b> · previsto para <b>03/08/2026</b> — <b>8 dias de atraso</b></div>
+      </div>
+      <span class="badge atrasado">Atrasado</span>
+    </div>
+
+    <div class="list-item">
+      <div class="cover sm" style="--c:#2e6e8e"><div class="t">O Pequeno Príncipe</div></div>
+      <div class="info">
+        <div class="t">O Pequeno Príncipe</div>
+        <div class="a">Antoine de Saint-Exupéry</div>
+        <div class="d">Emprestado em <b>10/07/2026</b> · devolvido em <b>18/07/2026</b></div>
+      </div>
+      <span class="badge devolvido">Devolvido</span>
+    </div>
+  </div>
+
+  <p class="hint" style="font-size:12.5px;margin-bottom:20px">
+    A devolução não é feita pelo site: procure o bibliotecário para registrar a entrega.
+  </p>
+  <a href="01-catalogo-classico.html" class="btn">Ver catálogo</a>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Ensino Fundamental e Médio</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>

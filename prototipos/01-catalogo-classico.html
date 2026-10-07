@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Catálogo Clássico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3ede1;
+    --paper-2:#ece4d3;
+    --ink:#38291a;
+    --ink-soft:#6b5840;
+    --stamp:#9e2b25;
+    --rule:#c9b896;
+    --serif:'Playfair Display', Georgia, 'Times New Roman', serif;
+    --body:'Source Serif 4', Georgia, serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(158,43,37,0.05), transparent 45%),
+      radial-gradient(ellipse at 80% 100%, rgba(201,184,150,0.25), transparent 50%),
+      var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    min-height:100vh;
+    transition:background-color .3s ease, color .3s ease;
+  }
+  /* ===== top ribbon ===== */
+  .ribbon{
+    border-bottom:3px double var(--rule);
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);text-align:center;padding:9px 0;
+    font-family:var(--body);
+  }
+  /* ===== header ===== */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:26px 48px 18px;gap:24px;
+    border-bottom:1px solid var(--rule);
+  }
+  .brand{display:flex;align-items:center;gap:18px}
+  .stamp{
+    width:62px;height:62px;border-radius:50%;
+    border:2px solid var(--stamp);color:var(--stamp);
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:8.5px;letter-spacing:.14em;line-height:1.35;
+    text-transform:uppercase;position:relative;flex-shrink:0;
+    font-family:var(--body);
+  }
+  .stamp::before{
+    content:"✦";position:absolute;top:5px;font-size:9px;
+  }
+  .stamp::after{
+    content:"";position:absolute;inset:5px;border:1px solid rgba(158,43,37,.5);border-radius:50%;
+  }
+  .brand h1{
+    font-family:var(--serif);font-weight:600;font-size:30px;letter-spacing:.01em;
+  }
+  .brand .sub{
+    font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);
+    margin-top:3px;
+  }
+  .regno{
+    text-align:right;font-size:11px;color:var(--ink-soft);line-height:1.7;font-style:italic;
+  }
+  /* ===== toolbar ===== */
+  .toolbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:18px 48px;border-bottom:1px solid var(--rule);
+  }
+  .search{display:flex;align-items:center;gap:10px;flex:1;max-width:440px}
+  .search label{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+  .search input{
+    flex:1;background:transparent;border:none;border-bottom:1px solid var(--ink);
+    padding:6px 2px;font-family:var(--body);font-size:15px;font-style:italic;color:var(--ink);
+    outline:none;
+  }
+  .search input::placeholder{color:#a08a68}
+  .genres{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .genres button{
+    font-family:var(--body);font-size:11.5px;letter-spacing:.06em;
+    padding:4px 12px;background:transparent;border:1px solid var(--rule);
+    color:var(--ink-soft);cursor:pointer;transition:all .18s;
+  }
+  .genres button:hover,.genres button.on{
+    border-color:var(--ink);color:var(--ink);background:var(--paper-2);
+  }
+  /* ===== grid ===== */
+  .catalog{padding:34px 48px 60px}
+  .shelf-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:26px;
+  }
+  .shelf-head h2{font-family:var(--serif);font-weight:600;font-size:20px;font-style:italic}
+  .shelf-head span{font-size:11.5px;color:var(--ink-soft);letter-spacing:.08em}
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));
+    gap:34px 26px;
+  }
+  .book{position:relative}
+  .cover{
+    position:relative;aspect-ratio:2/3;
+    background:
+      linear-gradient(160deg, rgba(255,255,255,.12), transparent 38%),
+      var(--c);
+    border:1px solid rgba(0,0,0,.35);
+    box-shadow:3px 4px 10px rgba(56,41,26,.28), inset 0 0 0 5px rgba(0,0,0,.14);
+    display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+    padding:18px 12px 14px;text-align:center;color:#f4ead6;
+    cursor:pointer;transition:transform .22s ease, box-shadow .22s ease;
+  }
+  .cover::before{
+    content:"";position:absolute;left:7px;top:7px;bottom:7px;width:1px;
+    background:rgba(244,234,214,.35);
+  }
+  .cover::after{
+    content:"✦";position:absolute;top:8px;right:9px;font-size:10px;opacity:.7;
+  }
+  .cover .orn{font-size:13px;opacity:.8;letter-spacing:.3em}
+  .cover .t{
+    font-family:var(--serif);font-size:16.5px;line-height:1.22;font-weight:600;
+    text-shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+  .cover .a{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+  .book:hover .cover{
+    transform:rotate(-1.6deg) translateY(-4px);
+    box-shadow:5px 9px 18px rgba(56,41,26,.35), inset 0 0 0 5px rgba(0,0,0,.14);
+  }
+  .meta{padding-top:10px}
+  .meta .t{font-family:var(--serif);font-size:14.5px;line-height:1.25;font-style:italic}
+  .meta .a{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+  .meta .row{display:flex;align-items:center;justify-content:space-between;margin-top:5px}
+  .genre{
+    font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    border:1px solid var(--rule);color:var(--ink-soft);padding:1.5px 7px;
+  }
+  .callno{font-size:10px;color:#a08a68;font-style:italic}
+  .avail{font-size:10px;color:#5d7a3c}
+  .avail.no{color:var(--stamp)}
+  /* ===== stamp detail (hover card) ===== */
+  .book .card{
+    position:absolute;left:50%;bottom:calc(100% - 8px);transform:translate(-50%,6px);
+    width:220px;background:var(--paper);border:1px solid var(--ink);
+    padding:14px 16px;opacity:0;pointer-events:none;transition:all .2s ease;
+    z-index:10;box-shadow:6px 8px 0 rgba(56,41,26,.12);
+    font-size:12px;line-height:1.5;
+  }
+  .book:hover .card{opacity:1;transform:translate(-50%,0)}
+  .book .card::after{
+    content:"BIBLIOTECA ESCOLAR";display:block;margin-top:10px;text-align:center;
+    border:1px solid var(--stamp);color:var(--stamp);font-size:8.5px;
+    letter-spacing:.2em;padding:3px 0;transform:rotate(-1.2deg);
+  }
+  .book .card .ct{font-family:var(--serif);font-style:italic;font-size:14px;border-bottom:1px solid var(--rule);padding-bottom:5px;margin-bottom:6px}
+  .book .card .l{display:flex;justify-content:space-between;font-size:11px}
+  .book .card .l b{font-weight:600}
+  .book .card .act{
+    display:block;margin-top:8px;text-align:center;font-family:var(--body);
+    border:1px solid var(--ink);padding:5px 0;font-size:12px;letter-spacing:.06em;
+    color:var(--ink);text-decoration:none;cursor:pointer;background:transparent;
+    transition:background .15s, color .15s;
+  }
+  .book .card .act:hover{background:var(--ink);color:var(--paper)}
+  .theme-toggle{
+    display:inline-flex;align-items:center;gap:7px;
+    background:transparent;border:1px solid var(--rule);color:var(--ink-soft);
+    font-family:var(--body);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    font-style:normal;padding:5px 11px;cursor:pointer;margin-top:9px;transition:all .18s;
+  }
+  .theme-toggle:hover{border-color:var(--ink);color:var(--ink)}
+  /* ===== dark mode ===== */
+  :root[data-theme="dark"]{
+    --paper:#201a13;
+    --paper-2:#2b2217;
+    --ink:#e9dcc2;
+    --ink-soft:#ab9370;
+    --stamp:#d8504a;
+    --rule:#4c3b26;
+  }
+  :root[data-theme="dark"] body{
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(216,80,74,.07), transparent 45%),
+      radial-gradient(ellipse at 80% 100%, rgba(76,59,38,.5), transparent 55%),
+      var(--paper);
+  }
+  :root[data-theme="dark"] .cover{
+    box-shadow:4px 5px 14px rgba(0,0,0,.55), inset 0 0 0 5px rgba(0,0,0,.2);
+  }
+  :root[data-theme="dark"] .book:hover .cover{
+    box-shadow:6px 11px 22px rgba(0,0,0,.6), inset 0 0 0 5px rgba(0,0,0,.2);
+  }
+  :root[data-theme="dark"] .search input::placeholder{color:#6f5c41}
+  :root[data-theme="dark"] .book .card{box-shadow:6px 8px 0 rgba(0,0,0,.3)}
+  :root[data-theme="dark"] .callno{color:#7d6a4c}
+  :root[data-theme="dark"] .genres button.on{background:var(--paper-2)}
+  footer{
+    border-top:3px double var(--rule);padding:18px 48px;display:flex;
+    justify-content:space-between;font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div class="ribbon">Secretaria de Educação · Acervo aberto · Devolução em até 14 dias</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Catálogo Geral · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    Registro n.º 001/2026<br>
+    <span style="font-style:normal">Aberto de segunda a sexta</span><br>
+    <button class="theme-toggle" id="themeToggle" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search">
+    <label for="q">Buscar</label>
+    <input id="q" type="text" placeholder="por título, autor ou palavra…">
+  </div>
+  <div class="genres">
+    <button class="on">Todos</button>
+    <button>Romance</button>
+    <button>Mistério</button>
+    <button>Fantasia</button>
+    <button>Clássico</button>
+    <button>Aventura</button>
+  </div>
+</div>
+
+<div class="catalog">
+  <div class="shelf-head">
+    <h2>Acervo em destaque</h2>
+    <span>12 obras · 9 disponíveis para empréstimo</span>
+  </div>
+  <div class="grid">
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">Dom Casmurro</div>
+        <div class="l"><span>Autor</span><b>Machado de Assis</b></div>
+        <div class="l"><span>Gênero</span><b>Romance</b></div>
+        <div class="l"><span>Ano</span><b>1899</b></div>
+        <div class="l"><span>Exemplares</span><b>3 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#7a4a2b">
+        <div class="orn">❦ ❦</div>
+        <div class="t">Dom Casmurro</div>
+        <div class="a">Machado de Assis</div>
+      </div>
+      <div class="meta">
+        <div class="t">Dom Casmurro</div>
+        <div class="a">Machado de Assis</div>
+        <div class="row"><span class="genre">Romance</span><span class="callno">869.3 M149d</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">O Cortiço</div>
+        <div class="l"><span>Autor</span><b>Aluísio Azevedo</b></div>
+        <div class="l"><span>Gênero</span><b>Romance</b></div>
+        <div class="l"><span>Ano</span><b>1890</b></div>
+        <div class="l"><span>Exemplares</span><b>2 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#8c5a2b">
+        <div class="orn">❦ ❦</div>
+        <div class="t">O Cortiço</div>
+        <div class="a">Aluísio Azevedo</div>
+      </div>
+      <div class="meta">
+        <div class="t">O Cortiço</div>
+        <div class="a">Aluísio Azevedo</div>
+        <div class="row"><span class="genre">Romance</span><span class="callno">869.3 A994c</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">Grande Sertão: Veredas</div>
+        <div class="l"><span>Autor</span><b>Guimarães Rosa</b></div>
+        <div class="l"><span>Gênero</span><b>Clássico</b></div>
+        <div class="l"><span>Ano</span><b>1956</b></div>
+        <div class="l"><span>Exemplares</span><b>1 disponível</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#4a3f35">
+        <div class="orn">❦ ❦</div>
+        <div class="t">Grande Sertão:<br>Veredas</div>
+        <div class="a">Guimarães Rosa</div>
+      </div>
+      <div class="meta">
+        <div class="t">Grande Sertão: Veredas</div>
+        <div class="a">Guimarães Rosa</div>
+        <div class="row"><span class="genre">Clássico</span><span class="callno">869.3 R788g</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">Harry Potter e a Pedra Filosofal</div>
+        <div class="l"><span>Autor</span><b>J.K. Rowling</b></div>
+        <div class="l"><span>Gênero</span><b>Fantasia</b></div>
+        <div class="l"><span>Ano</span><b>1997</b></div>
+        <div class="l"><span>Exemplares</span><b>4 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#3b2f63">
+        <div class="orn">✦ ✦</div>
+        <div class="t">Harry Potter e a Pedra Filosofal</div>
+        <div class="a">J.K. Rowling</div>
+      </div>
+      <div class="meta">
+        <div class="t">Harry Potter e a Pedra Filosofal</div>
+        <div class="a">J.K. Rowling</div>
+        <div class="row"><span class="genre">Fantasia</span><span class="callno">823 R884h</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">O Pequeno Príncipe</div>
+        <div class="l"><span>Autor</span><b>Antoine de Saint-Exupéry</b></div>
+        <div class="l"><span>Gênero</span><b>Infantojuvenil</b></div>
+        <div class="l"><span>Ano</span><b>1943</b></div>
+        <div class="l"><span>Exemplares</span><b>5 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#2e6e8e">
+        <div class="orn">✦ ✦</div>
+        <div class="t">O Pequeno Príncipe</div>
+        <div class="a">Saint-Exupéry</div>
+      </div>
+      <div class="meta">
+        <div class="t">O Pequeno Príncipe</div>
+        <div class="a">Saint-Exupéry</div>
+        <div class="row"><span class="genre">Juvenil</span><span class="callno">843 S137p</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">Um Estudo em Vermelho</div>
+        <div class="l"><span>Autor</span><b>Arthur Conan Doyle</b></div>
+        <div class="l"><span>Gênero</span><b>Mistério</b></div>
+        <div class="l"><span>Ano</span><b>1887</b></div>
+        <div class="l"><span>Exemplares</span><b>2 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#1d5c46">
+        <div class="orn">❦ ❦</div>
+        <div class="t">Um Estudo em Vermelho</div>
+        <div class="a">Arthur Conan Doyle</div>
+      </div>
+      <div class="meta">
+        <div class="t">Um Estudo em Vermelho</div>
+        <div class="a">Conan Doyle</div>
+        <div class="row"><span class="genre">Mistério</span><span class="callno">823 D754e</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">Percy Jackson e o Ladrão de Raios</div>
+        <div class="l"><span>Autor</span><b>Rick Riordan</b></div>
+        <div class="l"><span>Gênero</span><b>Aventura</b></div>
+        <div class="l"><span>Ano</span><b>2005</b></div>
+        <div class="l"><span>Exemplares</span><b>3 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#1e4d8c">
+        <div class="orn">✦ ✦</div>
+        <div class="t">Percy Jackson e o Ladrão de Raios</div>
+        <div class="a">Rick Riordan</div>
+      </div>
+      <div class="meta">
+        <div class="t">Percy Jackson e o Ladrão de Raios</div>
+        <div class="a">Rick Riordan</div>
+        <div class="row"><span class="genre">Aventura</span><span class="callno">813 R585p</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">1984</div>
+        <div class="l"><span>Autor</span><b>George Orwell</b></div>
+        <div class="l"><span>Gênero</span><b>Ficção</b></div>
+        <div class="l"><span>Ano</span><b>1949</b></div>
+        <div class="l"><span>Exemplares</span><b>0 disponíveis</b></div>
+        <button class="act" disabled style="opacity:.45;cursor:default">Emprestado</button>
+      </div>
+      <div class="cover" style="--c:#262626">
+        <div class="orn">❦ ❦</div>
+        <div class="t">1984</div>
+        <div class="a">George Orwell</div>
+      </div>
+      <div class="meta">
+        <div class="t">1984</div>
+        <div class="a">George Orwell</div>
+        <div class="row"><span class="genre">Ficção</span><span class="callno">823 O79n</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">O Senhor dos Anéis</div>
+        <div class="l"><span>Autor</span><b>J.R.R. Tolkien</b></div>
+        <div class="l"><span>Gênero</span><b>Fantasia</b></div>
+        <div class="l"><span>Ano</span><b>1954</b></div>
+        <div class="l"><span>Exemplares</span><b>1 disponível</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#5a3d1a">
+        <div class="orn">✦ ✦</div>
+        <div class="t">O Senhor dos Anéis</div>
+        <div class="a">J.R.R. Tolkien</div>
+      </div>
+      <div class="meta">
+        <div class="t">O Senhor dos Anéis</div>
+        <div class="a">J.R.R. Tolkien</div>
+        <div class="row"><span class="genre">Fantasia</span><span class="callno">823 T649s</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">Memórias Póstumas de Brás Cubas</div>
+        <div class="l"><span>Autor</span><b>Machado de Assis</b></div>
+        <div class="l"><span>Gênero</span><b>Clássico</b></div>
+        <div class="l"><span>Ano</span><b>1881</b></div>
+        <div class="l"><span>Exemplares</span><b>2 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#6b4a2b">
+        <div class="orn">❦ ❦</div>
+        <div class="t">Memórias Póstumas<br>de Brás Cubas</div>
+        <div class="a">Machado de Assis</div>
+      </div>
+      <div class="meta">
+        <div class="t">Memórias Póstumas de Brás Cubas</div>
+        <div class="a">Machado de Assis</div>
+        <div class="row"><span class="genre">Clássico</span><span class="callno">869.3 M149m</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">A Menina que Roubava Livros</div>
+        <div class="l"><span>Autor</span><b>Markus Zusak</b></div>
+        <div class="l"><span>Gênero</span><b>Drama</b></div>
+        <div class="l"><span>Ano</span><b>2005</b></div>
+        <div class="l"><span>Exemplares</span><b>2 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#8a2b2b">
+        <div class="orn">✦ ✦</div>
+        <div class="t">A Menina que Roubava Livros</div>
+        <div class="a">Markus Zusak</div>
+      </div>
+      <div class="meta">
+        <div class="t">A Menina que Roubava Livros</div>
+        <div class="a">Markus Zusak</div>
+        <div class="row"><span class="genre">Drama</span><span class="callno">823 Z96m</span></div>
+      </div>
+    </div>
+
+    <div class="book">
+      <div class="card">
+        <div class="ct">É Assim que Acaba</div>
+        <div class="l"><span>Autor</span><b>Colleen Hoover</b></div>
+        <div class="l"><span>Gênero</span><b>Romance</b></div>
+        <div class="l"><span>Ano</span><b>2016</b></div>
+        <div class="l"><span>Exemplares</span><b>2 disponíveis</b></div>
+        <button class="act">Solicitar empréstimo</button>
+      </div>
+      <div class="cover" style="--c:#b04a5a">
+        <div class="orn">❦ ❦</div>
+        <div class="t">É Assim que Acaba</div>
+        <div class="a">Colleen Hoover</div>
+      </div>
+      <div class="meta">
+        <div class="t">É Assim que Acaba</div>
+        <div class="a">Colleen Hoover</div>
+        <div class="row"><span class="genre">Romance</span><span class="callno">813 H789é</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Ensino Fundamental e Médio</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem("biblio_tema"); } catch(e) {}
+  var preferDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var theme = saved || (preferDark ? "dark" : "light");
+  root.setAttribute("data-theme", theme);
+
+  var btn = document.getElementById("themeToggle");
+  var icon = document.getElementById("themeIcon");
+  var label = document.getElementById("themeLabel");
+
+  function paint(t){
+    root.setAttribute("data-theme", t);
+    if (t === "dark") { icon.textContent = "☀"; label.textContent = "Claro"; }
+    else { icon.textContent = "☾"; label.textContent = "Escuro"; }
+  }
+  paint(theme);
+
+  btn.addEventListener("click", function(){
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    try { localStorage.setItem("biblio_tema", next); } catch(e) {}
+    paint(next);
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Dom Casmurro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+</head>
+<body>
+
+<div class="ribbon">Secretaria de Educação · Acervo aberto · Devolução em até 14 dias</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Catálogo Geral · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    RA 12.3456 · Leitor<br>
+    <button class="theme-toggle" onclick="biblioToggleTema()" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="01-catalogo-classico.html">← Catálogo</a> / Dom Casmurro</div>
+
+  <div style="display:flex;gap:44px;flex-wrap:wrap;align-items:flex-start">
+    <div style="position:relative;flex-shrink:0">
+      <div class="cover lg" style="--c:#7a4a2b">
+        <div class="orn">❦ ❦</div>
+        <div class="t">Dom Casmurro</div>
+        <div class="a">Machado de Assis</div>
+      </div>
+      <div style="position:absolute;right:-14px;top:-14px;transform:rotate(6deg);
+                  background:var(--paper);border:2px solid var(--ok);color:var(--ok);
+                  font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:6px 12px;
+                  box-shadow:2px 3px 0 rgba(56,41,26,.15)">Disponível</div>
+    </div>
+
+    <div style="flex:1;min-width:300px">
+      <h2 style="font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.1">Dom Casmurro</h2>
+      <p style="font-size:15px;color:var(--ink-soft);margin-top:6px">Machado de Assis</p>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <span class="tag">Romance</span>
+        <span class="tag">Clássico</span>
+        <span class="tag">Brasileiro</span>
+      </div>
+
+      <div class="card" style="margin-top:26px">
+        <h3>Sinopse</h3>
+        <p style="font-size:14.5px;line-height:1.75;color:var(--ink)">
+          Bento Santiago narra, já velho, a história de sua vida: o amor por Capitu,
+          o ciúme que o consome e a dúvida que nunca se resolve — uma das obras mais
+          enigmáticas da literatura brasileira, publicada em 1899.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 20px;margin-top:22px;font-size:13.5px">
+          <div><span class="hint">Ano</span><br><b>1899</b></div>
+          <div><span class="hint">Classificação</span><br><b>869.3 M149d</b></div>
+          <div><span class="hint">ISBN</span><br><b>978-85-01-00000-0</b></div>
+          <div><span class="hint">Exemplares</span><br><b style="color:var(--ok)">3 de 5 disponíveis</b></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <a href="#" class="btn primary" style="min-width:240px">Solicitar empréstimo</a>
+        <span class="hint" style="font-size:12.5px">Prazo de 14 dias · limite de 3 livros por aluno</span>
+      </div>
+      <p class="hint" style="margin-top:14px;font-size:12px">
+        A devolução é registrada pelo bibliotecário. Ao solicitar, o exemplar é reservado em seu nome.
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Ensino Fundamental e Médio</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>

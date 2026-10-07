@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Alunos &amp; Admins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+</head>
+<body>
+
+<div class="ribbon">Área administrativa · Acesso restrito a bibliotecários</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Administração · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    RA 12.3456 · Bibliotecário<br>
+    <button class="theme-toggle" onclick="biblioToggleTema()" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <a href="07-admin-dashboard.html">Dashboard</a>
+    <a href="08-admin-livros.html">Livros</a>
+    <a href="09-admin-emprestimos.html">Empréstimos</a>
+    <a class="on" href="10-admin-alunos.html">Alunos &amp; Admins</a>
+  </nav>
+
+  <div class="page-head">
+    <div>
+      <h2>Alunos</h2>
+      <div class="sub">Dados espelhados da SED no primeiro login</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Consultar aluno</h3>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="flex:1;min-width:220px;margin-bottom:0">
+        <label for="ra">RA</label>
+        <input id="ra" placeholder="123456789">
+        <div class="hint">O sufixo “sp” é adicionado automaticamente.</div>
+      </div>
+      <button class="btn">Localizar</button>
+    </div>
+
+    <div style="margin-top:22px;border:1px solid var(--rule);padding:20px 24px">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:var(--serif);font-style:italic;font-size:19px">Ana Souza</div>
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-top:3px">RA <b>123456789</b> · 3º ano A · Ensino Médio</div>
+        </div>
+        <div style="text-align:right;font-size:12.5px;line-height:1.8">
+          Empréstimos ativos: <b>1</b> · Atrasos: <b>0</b>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px">
+        <table class="table">
+          <thead>
+            <tr><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="t-title">O Cortiço</td><td>28/07</td><td>11/08</td><td><span class="badge ativo">Ativo</span></td></tr>
+            <tr><td class="t-title">O Pequeno Príncipe</td><td>10/07</td><td>24/07</td><td><span class="badge devolvido">Devolvido</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Admins</h3>
+    <p class="hint" style="margin-bottom:16px">
+      Quem tem RA nesta lista entra direto na área administrativa. Os demais caem no catálogo de aluno.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
+      <div class="field" style="flex:1;min-width:220px;margin-bottom:0">
+        <label for="raAdmin">RA do novo admin</label>
+        <input id="raAdmin" placeholder="123456789">
+      </div>
+      <button class="btn primary">Adicionar admin</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>RA</th><th>Nome</th><th style="text-align:right">Ação</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>123456789</td><td>Ana Souza</td><td style="text-align:right"><button class="btn sm danger">Remover admin</button></td></tr>
+          <tr><td>987654321</td><td>Marcos Paulo</td><td style="text-align:right"><button class="btn sm danger">Remover admin</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Área administrativa</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>

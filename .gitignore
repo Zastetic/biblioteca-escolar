@@ -1,0 +1,20 @@
+# Ambiente / dependências
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Banco local — contém dados de alunos (nome, CPF, e-mail). NUNCA versionar.
+*.db
+*.db-journal
+*.sqlite3
+backups/
+
+# Segredos
+.env
+.env.local
+*.key
+
+# Sistema
+.DS_Store
+Thumbs.db

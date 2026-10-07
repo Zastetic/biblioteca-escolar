@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Empréstimos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+</head>
+<body>
+
+<div class="ribbon">Área administrativa · Acesso restrito a bibliotecários</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Administração · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    RA 12.3456 · Bibliotecário<br>
+    <button class="theme-toggle" onclick="biblioToggleTema()" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <a href="07-admin-dashboard.html">Dashboard</a>
+    <a href="08-admin-livros.html">Livros</a>
+    <a class="on" href="09-admin-emprestimos.html">Empréstimos</a>
+    <a href="10-admin-alunos.html">Alunos &amp; Admins</a>
+  </nav>
+
+  <div class="page-head">
+    <div>
+      <h2>Empréstimos</h2>
+      <div class="sub">7 ativos · 2 atrasados · histórico completo</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Registrar devolução</h3>
+    <p class="hint" style="margin-bottom:16px">
+      Identifique o empréstimo pelo <b>nome do aluno</b> e o <b>título do livro</b> — não precisa do RA.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="flex:1;min-width:200px;margin-bottom:0">
+        <label for="aluno">Nome do aluno</label>
+        <input id="aluno" placeholder="Ana Souza">
+      </div>
+      <div class="field" style="flex:1;min-width:200px;margin-bottom:0">
+        <label for="livro">Livro</label>
+        <input id="livro" placeholder="O Cortiço">
+      </div>
+      <button class="btn">Localizar</button>
+    </div>
+
+    <div style="margin-top:20px;border:1px solid var(--rule);padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="cover sm" style="--c:#8c5a2b;cursor:default"><div class="t">O Cortiço</div></div>
+      <div class="info" style="flex:1;min-width:200px">
+        <div class="t" style="font-family:var(--serif);font-style:italic;font-size:15.5px">O Cortiço</div>
+        <div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px">
+          <b>Ana Souza</b> · saída 28/07/2026 · prevista 11/08/2026
+        </div>
+      </div>
+      <span class="badge ativo">Ativo</span>
+      <button class="btn primary sm">Registrar devolução</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Empréstimos ativos</h3>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Aluno</th><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th><th style="text-align:right">Ação</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ana Souza</td><td class="t-title">O Cortiço</td><td>28/07</td><td>11/08</td>
+            <td><span class="badge ativo">Ativo</span></td>
+            <td style="text-align:right"><button class="btn sm primary">Devolver</button></td>
+          </tr>
+          <tr>
+            <td>Bruno Lima</td><td class="t-title">1984</td><td>20/07</td><td>03/08</td>
+            <td><span class="badge atrasado">Atrasado 8d</span></td>
+            <td style="text-align:right"><button class="btn sm primary">Devolver</button></td>
+          </tr>
+          <tr>
+            <td>Eduarda Nunes</td><td class="t-title">A Menina que Roubava Livros</td><td>25/07</td><td>08/08</td>
+            <td><span class="badge atrasado">Atrasado 3d</span></td>
+            <td style="text-align:right"><button class="btn sm primary">Devolver</button></td>
+          </tr>
+          <tr>
+            <td>Diego Rocha</td><td class="t-title">Um Estudo em Vermelho</td><td>05/08</td><td>19/08</td>
+            <td><span class="badge ativo">Ativo</span></td>
+            <td style="text-align:right"><button class="btn sm primary">Devolver</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Histórico (últimas devoluções)</h3>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Aluno</th><th>Livro</th><th>Saída</th><th>Devolvido</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Carla Mendes</td><td class="t-title">O Pequeno Príncipe</td><td>10/07</td><td>18/07</td><td><span class="badge devolvido">Devolvido</span></td></tr>
+          <tr><td>Felipe Castro</td><td class="t-title">Dom Casmurro</td><td>02/07</td><td>15/07</td><td><span class="badge devolvido">Devolvido</span></td></tr>
+          <tr><td>Gabriela Reis</td><td class="t-title">Percy Jackson e o Ladrão de Raios</td><td>22/06</td><td>06/07</td><td><span class="badge devolvido">Devolvido</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Área administrativa</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Livros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+</head>
+<body>
+
+<div class="ribbon">Área administrativa · Acesso restrito a bibliotecários</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Administração · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    RA 12.3456 · Bibliotecário<br>
+    <button class="theme-toggle" onclick="biblioToggleTema()" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <a href="07-admin-dashboard.html">Dashboard</a>
+    <a class="on" href="08-admin-livros.html">Livros</a>
+    <a href="09-admin-emprestimos.html">Empréstimos</a>
+    <a href="10-admin-alunos.html">Alunos &amp; Admins</a>
+  </nav>
+
+  <div class="page-head">
+    <div>
+      <h2>Acervo</h2>
+      <div class="sub">45 obras · 34 exemplares disponíveis</div>
+    </div>
+    <div><a href="#" class="btn primary">＋ Cadastrar livro</a></div>
+  </div>
+
+  <div class="card">
+    <h3>Novo registro</h3>
+    <div class="form-grid">
+      <div class="field">
+        <label for="titulo">Título</label>
+        <input id="titulo" placeholder="Dom Casmurro">
+      </div>
+      <div class="field">
+        <label for="autor">Autor</label>
+        <input id="autor" placeholder="Machado de Assis">
+      </div>
+      <div class="field">
+        <label for="isbn">ISBN</label>
+        <input id="isbn" placeholder="978-85-01-00000-0">
+        <div class="hint">A capa é carregada automaticamente pelo ISBN (Google Books).</div>
+      </div>
+      <div class="field">
+        <label for="genero">Gênero</label>
+        <select id="genero">
+          <option>Romance</option><option>Mistério</option><option>Fantasia</option>
+          <option>Clássico</option><option>Aventura</option><option>Ficção</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ano">Ano de publicação</label>
+        <input id="ano" placeholder="1899">
+      </div>
+      <div class="field">
+        <label for="exemplares">Exemplares</label>
+        <input id="exemplares" placeholder="3">
+      </div>
+      <div class="field full">
+        <label for="sinopse">Sinopse</label>
+        <textarea id="sinopse" rows="3" placeholder="Breve descrição da obra…"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:6px">
+      <button class="btn primary">Salvar</button>
+      <button class="btn">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Obras cadastradas</h3>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th></th><th>Título</th><th>Autor</th><th>Gênero</th><th>Exemplares</th><th style="text-align:right">Ações</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="cover sm" style="--c:#7a4a2b;cursor:default"><div class="t">Dom Casmurro</div></div></td>
+            <td class="t-title">Dom Casmurro</td><td>Machado de Assis</td><td><span class="tag">Romance</span></td>
+            <td>3 / 5</td>
+            <td><div class="actions"><a href="#" class="btn sm">Editar</a><a href="#" class="btn sm danger">Remover</a></div></td>
+          </tr>
+          <tr>
+            <td><div class="cover sm" style="--c:#8c5a2b;cursor:default"><div class="t">O Cortiço</div></div></td>
+            <td class="t-title">O Cortiço</td><td>Aluísio Azevedo</td><td><span class="tag">Romance</span></td>
+            <td>1 / 2</td>
+            <td><div class="actions"><a href="#" class="btn sm">Editar</a><a href="#" class="btn sm danger">Remover</a></div></td>
+          </tr>
+          <tr>
+            <td><div class="cover sm" style="--c:#3b2f63;cursor:default"><div class="t">Harry Potter e a Pedra Filosofal</div></div></td>
+            <td class="t-title">Harry Potter e a Pedra Filosofal</td><td>J.K. Rowling</td><td><span class="tag">Fantasia</span></td>
+            <td>4 / 4</td>
+            <td><div class="actions"><a href="#" class="btn sm">Editar</a><a href="#" class="btn sm danger">Remover</a></div></td>
+          </tr>
+          <tr>
+            <td><div class="cover sm" style="--c:#262626;cursor:default"><div class="t">1984</div></div></td>
+            <td class="t-title">1984</td><td>George Orwell</td><td><span class="tag">Ficção</span></td>
+            <td>0 / 1</td>
+            <td><div class="actions"><a href="#" class="btn sm">Editar</a><a href="#" class="btn sm danger">Remover</a></div></td>
+          </tr>
+          <tr>
+            <td><div class="cover sm" style="--c:#2e6e8e;cursor:default"><div class="t">O Pequeno Príncipe</div></div></td>
+            <td class="t-title">O Pequeno Príncipe</td><td>Saint-Exupéry</td><td><span class="tag">Juvenil</span></td>
+            <td>5 / 5</td>
+            <td><div class="actions"><a href="#" class="btn sm">Editar</a><a href="#" class="btn sm danger">Remover</a></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Área administrativa</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>

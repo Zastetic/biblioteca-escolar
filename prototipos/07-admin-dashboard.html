@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar — Painel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+</head>
+<body>
+
+<div class="ribbon">Área administrativa · Acesso restrito a bibliotecários</div>
+
+<header>
+  <div class="brand">
+    <div class="stamp">Biblioteca<br>Escolar</div>
+    <div>
+      <h1>Biblioteca Escolar</h1>
+      <div class="sub">Administração · 2026</div>
+    </div>
+  </div>
+  <div class="regno">
+    RA 12.3456 · Bibliotecário<br>
+    <button class="theme-toggle" onclick="biblioToggleTema()" aria-label="Alternar modo claro/escuro"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <a class="on" href="07-admin-dashboard.html">Dashboard</a>
+    <a href="08-admin-livros.html">Livros</a>
+    <a href="09-admin-emprestimos.html">Empréstimos</a>
+    <a href="10-admin-alunos.html">Alunos &amp; Admins</a>
+  </nav>
+
+  <div class="page-head">
+    <div>
+      <h2>Bom dia, bibliotecário</h2>
+      <div class="sub">Situação do acervo em 11/08/2026</div>
+    </div>
+    <div class="right"><a href="01-catalogo-classico.html" style="color:var(--ink)">Ver como aluno →</a></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="n">7</div><div class="l">Emprestados agora</div></div>
+    <div class="stat warn"><div class="n">2</div><div class="l">Atrasados</div></div>
+    <div class="stat ok"><div class="n">34</div><div class="l">Exemplares disponíveis</div></div>
+    <div class="stat"><div class="n">45</div><div class="l">Obras no acervo</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:24px;align-items:start;margin-bottom:24px" class="dash-cols">
+    <div class="card">
+      <h3>⚠ Em atraso (2)</h3>
+      <div class="list-item" style="padding:12px 0">
+        <div class="cover sm" style="--c:#262626"><div class="t">1984</div></div>
+        <div class="info">
+          <div class="t">1984</div>
+          <div class="a">George Orwell</div>
+          <div class="d"><b>8 dias</b> de atraso · previsto 03/08</div>
+        </div>
+        <span class="badge atrasado">Atrasado</span>
+      </div>
+      <div class="list-item" style="padding:12px 0">
+        <div class="cover sm" style="--c:#8a2b2b"><div class="t">A Menina que Roubava Livros</div></div>
+        <div class="info">
+          <div class="t">A Menina que Roubava Livros</div>
+          <div class="a">Markus Zusak</div>
+          <div class="d"><b>3 dias</b> de atraso · previsto 08/08</div>
+        </div>
+        <span class="badge atrasado">Atrasado</span>
+      </div>
+      <a href="09-admin-emprestimos.html" class="btn sm" style="margin-top:8px">Ver todos</a>
+    </div>
+
+    <div class="card">
+      <h3>Mais alugados do mês</h3>
+      <div style="font-family:var(--body);font-size:13.5px">
+        <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--rule)">
+          <span><b style="color:var(--stamp)">1.</b> Dom Casmurro — Machado de Assis</span><b>6</b>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--rule)">
+          <span><b style="color:var(--stamp)">2.</b> Percy Jackson e o Ladrão de Raios</span><b>5</b>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--rule)">
+          <span><b style="color:var(--stamp)">3.</b> O Cortiço — Aluísio Azevedo</span><b>4</b>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--rule)">
+          <span><b style="color:var(--stamp)">4.</b> Harry Potter e a Pedra Filosofal</span><b>4</b>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:9px 2px">
+          <span><b style="color:var(--stamp)">5.</b> O Pequeno Príncipe</span><b>3</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Empréstimos recentes</h3>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Aluno</th><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Ana Souza</td><td class="t-title">O Cortiço</td><td>28/07</td><td>11/08</td><td><span class="badge ativo">Ativo</span></td></tr>
+          <tr><td>Bruno Lima</td><td class="t-title">1984</td><td>20/07</td><td>03/08</td><td><span class="badge atrasado">Atrasado</span></td></tr>
+          <tr><td>Carla Mendes</td><td class="t-title">O Pequeno Príncipe</td><td>10/07</td><td>24/07</td><td><span class="badge devolvido">Devolvido</span></td></tr>
+          <tr><td>Diego Rocha</td><td class="t-title">Um Estudo em Vermelho</td><td>05/08</td><td>19/08</td><td><span class="badge ativo">Ativo</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Biblioteca Escolar · Área administrativa</span>
+  <span>Empréstimo mediante RA · Devolução com o bibliotecário</span>
+</footer>
+
+</body>
+</html>
