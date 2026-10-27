@@ -5,6 +5,7 @@ Uso: TEST_BASE=http://127.0.0.1:PORT ./venv/bin/python tests/test_api.py
 Atenção: a suíte mexe no banco — rode com banco descartável (BIBLIO_DB).
 """
 import os
+import re
 import sqlite3
 import sys
 
@@ -33,6 +34,21 @@ def login(ra, senha):
 
 def auth(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+print("== 0. Formulário de foto e CSP ==")
+r = requests.get(f"{BASE}/", timeout=10)
+check("página pública carrega (200)", r.status_code == 200)
+html = r.text if r.status_code == 200 else ""
+app_version = re.search(r'app\.js\?v=([^\" ]+)', html)
+css_version = re.search(r'estilo\.css\?v=([^\" ]+)', html)
+check("assets do formulário têm cache-buster", app_version is not None and css_version is not None)
+app_js = requests.get(f"{BASE}/app.js?v={app_version.group(1)}", timeout=10).text if app_version else ""
+css = requests.get(f"{BASE}/estilo.css?v={css_version.group(1)}", timeout=10).text if css_version else ""
+check("botão explícito de preenchimento presente", 'id="btnCapaPreencher"' in app_js and "Preencher automaticamente" in app_js)
+check("foto e capa de catálogo têm previews separados", 'id="fCapaPreviewFigure"' in app_js and 'id="fCapaCatalogPreviewFigure"' in app_js)
+img_src = next((part for part in r.headers.get("Content-Security-Policy", "").split(";") if part.strip().startswith("img-src")), "")
+check("CSP permite preview local por blob:", "blob:" in img_src)
 
 
 print("== 1. Autenticação ==")

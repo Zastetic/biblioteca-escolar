@@ -42,6 +42,13 @@ Body: { "user": "<RA>sp", "senha": "<senha>" }
   - `NAME` (nome completo, em maiúsculas), `NR_CPF`, `EMAIL`, `PERFIS` (CD_PERFIL 6 = Aluno), `A[0].DT_NASC` (nascimento), `A[0].NR_TELEFONE`
   - **Turma NÃO vem nesse endpoint** → espelho guarda nome/CPF/email/nascimento; turma fica vazia (preencher futuramente via página ConsultaAluno ou outra API)
 - **HTTP 401** → `{"statusCode":401,"statusRetorno":"Usuário ou senha incorretos!"}` (não distingue RA de senha — bom pra segurança)
+- **HTTP 403** → `{"statusCode":403,"statusRetorno":"Usuário não pertence a rede estadual!"}` = **a SED aceitou a
+  credencial e recusou a conta**. Verificado em 08/10/2026: aconteceu com TODAS as contas testadas ao mesmo
+  tempo (9 RAs) e voltou a 200 sem qualquer mudança de código — é janela do lado da SED, não senha errada e
+  não bug do site. `sed_client.mensagem_de_recusa()` mostra esse motivo ao usuário em vez de "RA ou senha
+  incorretos"; o log da aplicação registra `SED recusou o login: HTTP <code> statusRetorno=... <ra>` (nunca a
+  senha). Também foi medido que não adianta reforçar cliente/cabeçalhos: `requests` puro e
+  `curl_cffi impersonate="chrome120"` recebem o mesmo 403, e Origin/Referer do app oficial não desbloqueiam.
 - Sucesso cria/atualiza o **espelho do aluno** no banco local (nome normalizado: "MARIA DA SILVA SOUZA" → "Maria da Silva Souza")
 - Usa `requests` com User-Agent de Chrome + timeout de 8s (mensagem amigável se a SED cair)
 
@@ -70,6 +77,20 @@ Body: { "user": "<RA>sp", "senha": "<senha>" }
 - a) Tabela `admins` (só o RA) — admin define quem é admin no painel;
 - b) Login admin separado.
 > Recomendação: (a) — simples e controlável. Aluno que tentar área admin leva "acesso negado".
+
+#### Implementado (a), com uma condição que confunde: o aluno precisa ter logado antes
+
+`POST /api/admin/admins` e `GET /api/admin/alunos/{ra}` **não aceitam RA arbitrário**: procuram o aluno na
+tabela `alunos` (o espelho do 1º login). Sem linha, a resposta é *"Aluno não encontrado. Ele precisa ter
+feito login ao menos uma vez."* — é requisito do desenho, não bug.
+
+**Chave canônica (08/10/2026).** O espelho era gravado com o RA **cru digitado**, então a mesma pessoa
+virava duas linhas (`1104299045sp` e `0001104299045sp`) e o painel, que casa string exata, errava a busca.
+Agora tudo passa por `sed_client.chave_aluno()` — sem pontos/traços/espaços, minúscula, sem zeros à
+esquerda, com `sp` — e os endpoints de admin aceitam qualquer grafia (`1104299045`, `1104299045sp`,
+`0001104299045sp` caem na mesma pessoa). Bases antigas se corrigem com
+`mvp/tools/migrar_ra_canonico.py --aplicar` (faz backup antes e MOVE empréstimos/sessões/admins para a
+linha canônica antes de apagar as duplicatas).
 
 ---
 
@@ -250,7 +271,8 @@ configuracoes (chave-valor, editável pelo admin)
 - **Integrada e testada com RA real em 11/08/2026** (login 200, espelho com nome/CPF/email/nascimento)
 - Modo **mock por padrão** (`SED_ENABLED != true`) — valida contra alunos seed (admin123/aluno123), sistema funciona offline e a suíte de testes roda nesse modo
 - `SED_ENABLED=true` → valida na SED real via `LoginCompletoToken` (sedintegracoes); credenciais mock NÃO funcionam nesse modo
-- Timeout de 8s com mensagem amigável se a SED cair; 401 vira "RA ou senha incorretos"
+- Timeout de 8s com mensagem amigável se a SED cair; 401 vira "RA ou senha incorretos" e **403 mostra o
+  motivo da SED** ("conta recusada") em vez de culpar a senha — ver a tabela de status no item 2
 - Espelho do aluno criado no primeiro login (nome normalizado, CPF, email, nascimento); turma pendente (não vem do endpoint)
 
 ### Testes

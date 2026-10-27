@@ -1,6 +1,19 @@
 /* Biblioteca Escolar — SPA (hash router) */
 const App = (() => {
   const GENEROS = ["Romance", "Mistério", "Fantasia", "Clássico", "Aventura", "Ficção", "Drama", "Juvenil"];
+  let loginMatrixObserver = null;
+  let loginMatrixResizeHandler = null;
+
+  function releaseLoginMatrixObserver() {
+    if (loginMatrixObserver) {
+      loginMatrixObserver.disconnect();
+      loginMatrixObserver = null;
+    }
+    if (loginMatrixResizeHandler) {
+      window.removeEventListener("resize", loginMatrixResizeHandler);
+      loginMatrixResizeHandler = null;
+    }
+  }
 
   // ---------- helpers ----------
   function esc(s) {
@@ -168,6 +181,7 @@ const App = (() => {
 
   async function router() {
     const raw = location.hash || "#/login";
+    if (raw !== "#/login") releaseLoginMatrixObserver();
     // rotas com parâmetro: #/livro/7
     let view = rotas[raw];
     let param = null;
@@ -207,31 +221,80 @@ const App = (() => {
 
   // ---------- view: login ----------
   async function loginView(out) {
+    releaseLoginMatrixObserver();
     out.innerHTML = `
       <div class="login-wrap">
-        <div class="login-card">
-          <div class="orn">❦ ❦ ❦</div>
-          <h2>Entrar</h2>
-          <p class="intro">Entre com seu RA e senha da Secretaria Digital.<br>Alunos e funcionários não precisam de cadastro.</p>
-          <div class="error-box" id="loginErr"><span id="loginErrMsg"></span><button type="button" class="x" id="loginErrX">✕</button></div>
-          <form id="loginForm">
-            <div class="field">
-              <label for="loginRa">RA do aluno</label>
-              <input id="loginRa" name="ra" type="text" placeholder="Ex.: 123456789" autocomplete="username" maxlength="20">
-              <div class="hint">O sufixo “sp” é adicionado automaticamente.</div>
+        <div class="login-matrix-band" aria-hidden="true">
+          <div class="kana-matrix"></div>
+        </div>
+        <section class="login-showcase" aria-label="Acesse o acervo da escola">
+          <p class="showcase-kicker"><span aria-hidden="true"></span> Leitura em movimento</p>
+          <h2>Entre no acervo.<br><span>Encontre sua próxima leitura.</span></h2>
+          <p class="showcase-copy">Use seu RA para consultar, solicitar e acompanhar livros da biblioteca.</p>
+        </section>
+        <div class="login-card-scene">
+          <div class="login-card">
+            <div class="login-card-top"><span>Entrar com RA e senha</span><span class="login-accent" aria-hidden="true"></span></div>
+            <h2>Entrar</h2>
+            <p class="intro">Entre com seu RA e senha da Secretaria Digital. Alunos e funcionários não precisam de cadastro.</p>
+            <div class="error-box" id="loginErr"><span id="loginErrMsg"></span><button type="button" class="x" id="loginErrX">✕</button></div>
+            <form id="loginForm">
+              <div class="field">
+                <label for="loginRa">RA do aluno</label>
+                <input id="loginRa" name="ra" type="text" placeholder="Ex.: 123456789" autocomplete="username" maxlength="20">
+                <div class="hint">O sufixo “sp” é adicionado automaticamente.</div>
+              </div>
+              <div class="field">
+                <label for="loginSenha">Senha</label>
+                <input id="loginSenha" name="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" maxlength="128">
+              </div>
+              <button type="submit" class="btn primary" style="width:100%;padding:12px 0" id="loginBtn">Entrar na biblioteca</button>
+            </form>
+            <div class="login-foot">
+              <span>Autenticação via</span>
+              <span class="sedsig">Secretaria Digital</span>
             </div>
-            <div class="field">
-              <label for="loginSenha">Senha</label>
-              <input id="loginSenha" name="senha" type="password" placeholder="••••••••" autocomplete="current-password" maxlength="128">
-            </div>
-            <button type="submit" class="btn primary" style="width:100%;padding:12px 0" id="loginBtn">Entrar na biblioteca</button>
-          </form>
-          <div class="login-foot">
-            <span>Verificação via SED</span>
-            <span class="sedsig">Secretaria Digital</span>
           </div>
         </div>
       </div>`;
+
+    const matrix = $(".kana-matrix", out);
+    const band = $(".login-matrix-band", out);
+    const loginWrap = $(".login-wrap", out);
+    const scene = $(".login-card-scene", out);
+    if (matrix && band && loginWrap && scene) {
+      const glyphs = Array.from("アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ");
+      const preencherMatriz = () => {
+        if (!matrix.isConnected || !band.isConnected || !loginWrap.isConnected || !scene.isConnected) {
+          releaseLoginMatrixObserver();
+          return;
+        }
+        const sceneRect = scene.getBoundingClientRect();
+        const wrapRect = loginWrap.getBoundingClientRect();
+        band.style.left = `${sceneRect.left + sceneRect.width / 2 - wrapRect.left + 15}px`;
+        const bandRect = band.getBoundingClientRect();
+        const columns = Math.max(1, Math.ceil(bandRect.width / 40) + 1);
+        const rows = Math.max(1, Math.ceil(bandRect.height / 40) + 1);
+        const targetCount = columns * rows;
+        while (matrix.children.length > targetCount) matrix.lastElementChild.remove();
+        const fragment = document.createDocumentFragment();
+        for (let i = matrix.children.length; i < targetCount; i++) {
+          const cell = document.createElement("span");
+          cell.textContent = glyphs[i % glyphs.length];
+          fragment.appendChild(cell);
+        }
+        matrix.appendChild(fragment);
+      };
+      preencherMatriz();
+      if ("ResizeObserver" in window) {
+        loginMatrixObserver = new ResizeObserver(preencherMatriz);
+        loginMatrixObserver.observe(loginWrap);
+        loginMatrixObserver.observe(scene);
+      } else {
+        loginMatrixResizeHandler = preencherMatriz;
+        window.addEventListener("resize", loginMatrixResizeHandler, { passive: true });
+      }
+    }
 
     const box = $("#loginErr");
     const msg = $("#loginErrMsg");
@@ -702,12 +765,30 @@ const App = (() => {
         <form id="livroForm">
           <div class="form-grid">
             <div class="field full">
-              <label>Foto da capa (preenchimento automático por IA)</label>
+              <label>Foto da capa (identificar e buscar nos catálogos)</label>
               <div class="capa-upload">
-                <input type="file" id="fCapaFoto" accept="image/*" hidden>
-                <button type="button" class="btn" id="btnCapaFoto">📷 Foto da capa</button>
-                <img id="fCapaPrev" alt="Prévia da capa" hidden>
-                <span class="hint" id="fCapaStatus">A IA lê a capa e preenche título, autor, gênero, ano, ISBN e sinopse.</span>
+                <input type="file" id="fCapaFoto" accept="image/jpeg,image/png,image/webp" hidden>
+                <div class="capa-actions">
+                  <button type="button" class="btn" id="btnCapaFoto">📷 Anexar foto</button>
+                  <button type="button" class="btn primary" id="btnCapaPreencher" disabled>Preencher automaticamente</button>
+                </div>
+                <figure id="fCapaPreviewFigure" class="capa-preview-card" hidden>
+                  <img id="fCapaPrev" alt="Prévia da foto anexada">
+                  <figcaption>Foto enviada · usada para identificar</figcaption>
+                </figure>
+                <figure id="fCapaCatalogPreviewFigure" class="capa-preview-card" hidden>
+                  <img id="fCapaCatalogPrev" alt="Capa retornada pelo catálogo">
+                  <figcaption>Capa encontrada no catálogo</figcaption>
+                </figure>
+                <span class="hint" id="fCapaStatus" aria-live="polite">Anexe a foto para ver a prévia. A consulta só começa quando você clicar em “Preencher automaticamente”; os dados vêm do Google Books ou Open Library.</span>
+                <div class="capa-match-picker" id="fCapaMatches" hidden>
+                  <div class="field">
+                    <label for="fCapaMatchSelect">Correspondências encontradas</label>
+                    <select id="fCapaMatchSelect" class="select-classico"></select>
+                  </div>
+                  <button type="button" class="btn sm" id="btnUsarCapaMatch">Usar registro</button>
+                  <div class="capa-match-sources" id="fCapaSources"></div>
+                </div>
               </div>
             </div>
             <div class="field"><label>Título *</label><input id="fTitulo" required maxlength="200" placeholder="Dom Casmurro"></div>
@@ -715,12 +796,12 @@ const App = (() => {
             <div class="field"><label>ISBN</label>
               <div class="isbn-row">
                 <input id="fIsbn" maxlength="30" placeholder="978-85-01-00000-0">
-                <button type="button" class="btn sm" id="btnIsbnBuscar">Buscar capa</button>
+                <button type="button" class="btn sm" id="btnIsbnBuscar">Buscar dados</button>
               </div>
               <input type="hidden" id="fCapaUrl">
-              <div class="hint" id="isbnStatus">Busca dados e capa reais pelo ISBN (Google Books).</div>
+              <div class="hint" id="isbnStatus">Busca metadados e capa reais pelo ISBN (Google Books/Open Library).</div>
             </div>
-            <div class="field"><label>Gênero</label><select id="fGenero">${GENEROS.map(g => `<option>${g}</option>`).join("")}</select></div>
+            <div class="field"><label>Gênero</label><select id="fGenero"><option value="">Não identificado</option>${GENEROS.map(g => `<option>${g}</option>`).join("")}</select></div>
             <div class="field"><label>Ano de publicação</label><input id="fAno" type="number" min="1000" max="2100" placeholder="1899"></div>
             <div class="field"><label>Exemplares *</label><input id="fTotal" type="number" min="1" max="1000" value="1"></div>
             <div class="field full"><label>Sinopse</label><textarea id="fSinopse" rows="3" maxlength="4000" placeholder="Breve descrição da obra…"></textarea></div>
@@ -772,15 +853,14 @@ const App = (() => {
     function preencher(id) {
       const l = livros.find(x => x.id === id);
       if (!l) return;
+      resetarBuscaCatalogo();
       editId = id;
       $("#formTitulo" ).textContent = "Editar registro";
       $("#fTitulo" ).value = l.titulo; $("#fAutor" ).value = l.autor; $("#fIsbn" ).value = l.isbn;
       $("#fGenero" ).value = l.genero; $("#fAno" ).value = l.ano || ""; $("#fTotal" ).value = l.total_exemplares;
       $("#fSinopse" ).value = l.sinopse || "";
       $("#fCapaUrl" ).value = l.capa_url || "";
-      const prevCapa = $("#fCapaPrev" );
-      if (l.capa_url) { prevCapa.src = l.capa_url; prevCapa.hidden = false; }
-      else { prevCapa.hidden = true; }
+      setCatalogCoverPreview(l.capa_url || "");
       $("#btnCancelarEdit" ).style.display = "";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -789,6 +869,7 @@ const App = (() => {
       $("#formTitulo").textContent = "Novo registro";
       $("#livroForm").reset();
       $("#btnCancelarEdit").style.display = "none";
+      resetarBuscaCatalogo();
     });
     $("#livroForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -815,76 +896,233 @@ const App = (() => {
         $("#formTitulo").textContent = "Novo registro";
         $("#livroForm").reset();
         $("#btnCancelarEdit").style.display = "none";
+        resetarBuscaCatalogo();
         livros = await API.get("/api/livros");
         renderTabela();
       } catch (err) { toast(err.message, "erro"); }
     });
 
-    // preenchimento automático por foto da capa (IA — Zoice multimodal)
-    const inputCapa = $("#fCapaFoto" );
-    $("#btnCapaFoto" ).addEventListener("click", () => inputCapa.click());
-    inputCapa.addEventListener("change", async () => {
-      const f = inputCapa.files[0];
-      if (!f) return;
-      const prevCapa = $("#fCapaPrev" );
-      const statusCapa = $("#fCapaStatus" );
-      prevCapa.src = URL.createObjectURL(f);
-      prevCapa.hidden = false;
-      statusCapa.textContent = "Analisando capa… (leva alguns segundos)";
+    // Identificação por Mistral (somente OCR) e preenchimento com registros catalogados.
+    const inputCapa = $("#fCapaFoto");
+    const btnCapaFoto = $("#btnCapaFoto");
+    const btnCapaPreencher = $("#btnCapaPreencher");
+    const photoPreviewFigure = $("#fCapaPreviewFigure");
+    const statusCapa = $("#fCapaStatus");
+    const matchBox = $("#fCapaMatches");
+    const matchSelect = $("#fCapaMatchSelect");
+    const sourceBox = $("#fCapaSources");
+    let currentMatches = [];
+    let matchStatusTarget = statusCapa;
+    let capaObjectUrl = null;
+    let selectedCapaFile = null;
+    let lastCatalogValues = {};
+
+    function limparMatches() {
+      currentMatches = [];
+      matchBox.hidden = true;
+      matchSelect.replaceChildren();
+      sourceBox.replaceChildren();
+    }
+    function limparDadosCatalogo() {
+      const capaAnterior = lastCatalogValues["#fCapaUrl"];
+      Object.entries(lastCatalogValues).forEach(([selector, value]) => {
+        const field = $(selector);
+        if (field && field.value === value) field.value = "";
+      });
+      if (capaAnterior && !$("#fCapaUrl").value) setCatalogCoverPreview("");
+      lastCatalogValues = {};
+    }
+    function setCatalogCoverPreview(url) {
+      const figure = $("#fCapaCatalogPreviewFigure");
+      const image = $("#fCapaCatalogPrev");
+      const safeUrl = typeof url === "string" && /^https:\/\/(books\.google\.com|covers\.openlibrary\.org)\//.test(url) ? url : "";
+      if (!safeUrl) {
+        figure.hidden = true;
+        image.removeAttribute("src");
+        return;
+      }
+      image.onerror = () => { figure.hidden = true; };
+      image.onload = () => { figure.hidden = false; };
+      figure.hidden = false;
+      image.src = safeUrl;
+      if (image.complete) figure.hidden = image.naturalWidth === 0;
+    }
+    function resetarBuscaCatalogo() {
+      limparMatches();
+      limparDadosCatalogo();
+      if (capaObjectUrl) { URL.revokeObjectURL(capaObjectUrl); capaObjectUrl = null; }
+      selectedCapaFile = null;
+      btnCapaPreencher.disabled = true;
+      inputCapa.value = "";
+      $("#fCapaPrev").removeAttribute("src");
+      photoPreviewFigure.hidden = true;
+      setCatalogCoverPreview("");
+      statusCapa.textContent = "Anexe a foto para ver a prévia. A consulta só começa quando você clicar em “Preencher automaticamente”; os dados vêm do Google Books ou Open Library.";
       statusCapa.style.color = "";
-      const fd = new FormData();
-      fd.append("file", f);
+      const statusIsbn = $("#isbnStatus");
+      statusIsbn.textContent = "Busca metadados e capa reais pelo ISBN (Google Books/Open Library).";
+      statusIsbn.style.color = "";
+    }
+    function nomesDasFontes(match) {
+      return (match.fontes || []).map(source => source.nome).filter(Boolean).join(" + ") || "catálogo bibliográfico";
+    }
+    function mostrarFontes(match) {
+      sourceBox.replaceChildren();
+      (match.fontes || []).forEach(source => {
+        if (!source || typeof source.url !== "string" || !/^https:\/\/(books\.google\.com|openlibrary\.org)\//.test(source.url)) return;
+        const link = document.createElement("a");
+        link.href = source.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = `Ver registro: ${source.nome}`;
+        sourceBox.append(link);
+      });
+    }
+    function aplicarRegistro(match, statusTarget = matchStatusTarget) {
+      if (!match) return;
+      limparDadosCatalogo();
+      const preenchidos = {};
+      const camposCopiados = [];
+      const copiar = (selector, value, label = "") => {
+        if (value === null || value === undefined || value === "") return;
+        const field = $(selector);
+        if (!field) return;
+        const text = String(value);
+        field.value = text;
+        if (field.value !== text) return;
+        preenchidos[selector] = text;
+        if (label) camposCopiados.push(label);
+      };
+      copiar("#fTitulo", match.titulo, "título");
+      copiar("#fAutor", match.autor, "autor");
+      copiar("#fIsbn", match.isbn, "ISBN");
+      copiar("#fAno", match.ano, "ano");
+      copiar("#fGenero", match.genero && GENEROS.includes(match.genero) ? match.genero : "", "gênero");
+      copiar("#fSinopse", match.sinopse, "sinopse");
+      copiar("#fCapaUrl", match.capa_url);
+      setCatalogCoverPreview(match.capa_url || "");
+      lastCatalogValues = preenchidos;
+      mostrarFontes(match);
+      if (!camposCopiados.length) {
+        statusTarget.textContent = `O registro de ${nomesDasFontes(match)} não trouxe campos de cadastro utilizáveis; nada foi preenchido.`;
+        statusTarget.style.color = "var(--stamp)";
+        return;
+      }
+      const aviso = match.confirmado ? "Confira os dados e a edição antes de salvar." : "Correspondência não confirmada pela foto; revise título e edição.";
+      const quantidade = camposCopiados.length;
+      statusTarget.textContent = `Preenchi ${quantidade} campo${quantidade === 1 ? "" : "s"} (${camposCopiados.join(", ")}) usando ${nomesDasFontes(match)}. ${aviso}`;
+      statusTarget.style.color = match.confirmado ? "var(--ok)" : "var(--ink-soft)";
+    }
+    function mensagemSemResultado(data) {
+      const ident = data.identificacao || {};
+      const trecho = [ident.titulo, ident.autor].filter(Boolean).join(" — ");
+      const problemas = Object.entries(data.provedores || {}).filter(([, state]) => ["quota", "bloqueado", "indisponivel", "resposta_invalida"].includes(state));
+      if (!ident.titulo && !ident.isbn) return "Não consegui ler título ou ISBN. Tente uma foto mais nítida da capa ou digite o ISBN.";
+      if (data.status === "fontes_indisponiveis") return `Não consegui consultar os catálogos agora (${problemas.map(([name]) => name === "google_books" ? "Google Books" : "Open Library").join(", ")}). Nada foi preenchido; tente novamente.`;
+      const origem = trecho ? `Texto lido para busca: ${trecho}. ` : "";
+      const indisponiveis = problemas.length ? ` Uma fonte ficou indisponível: ${problemas.map(([name]) => name === "google_books" ? "Google Books" : "Open Library").join(" e ")}.` : "";
+      return `${origem}Não encontrei uma correspondência nos catálogos.${indisponiveis} Nada foi preenchido.`;
+    }
+    function mostrarCorrespondencias(data, statusTarget = statusCapa) {
+      limparMatches();
+      matchStatusTarget = statusTarget;
+      currentMatches = Array.isArray(data.matches) ? data.matches : [];
+      if (!currentMatches.length) {
+        statusTarget.textContent = mensagemSemResultado(data);
+        statusTarget.style.color = "var(--stamp)";
+        return;
+      }
+      currentMatches.forEach((match, index) => {
+        const source = nomesDasFontes(match);
+        const label = [match.titulo, match.autor, match.ano, source, `${match.score}%`].filter(Boolean).join(" — ");
+        matchSelect.add(new Option(label, String(index)));
+      });
+      matchBox.hidden = false;
+      matchSelect.value = "0";
+      mostrarFontes(currentMatches[0]);
+      if (currentMatches[0].confirmado) {
+        aplicarRegistro(currentMatches[0], statusTarget);
+      } else {
+        const identificacao = data.identificacao || {};
+        const lido = [identificacao.titulo, identificacao.autor].filter(Boolean).join(" — ");
+        statusTarget.textContent = `${currentMatches.length} opção(ões) encontrada(s)${lido ? ` para “${lido}”` : ""}, mas nenhuma foi confirmada pela foto. Escolha um registro e clique em “Usar registro”; nada foi preenchido ainda.`;
+        statusTarget.style.color = "var(--ink-soft)";
+      }
+    }
+    btnCapaFoto.addEventListener("click", () => inputCapa.click());
+    $("#btnUsarCapaMatch").addEventListener("click", () => {
+      aplicarRegistro(currentMatches[Number(matchSelect.value)]);
+    });
+    matchSelect.addEventListener("change", () => {
+      const match = currentMatches[Number(matchSelect.value)];
+      if (!match) return;
+      mostrarFontes(match);
+      matchStatusTarget.textContent = `Selecionado: ${match.titulo}. Clique em “Usar registro” para copiar somente os dados da fonte.`;
+      matchStatusTarget.style.color = "var(--ink-soft)";
+    });
+    inputCapa.addEventListener("change", () => {
+      const file = inputCapa.files[0];
+      if (!file) return;
+      limparMatches();
+      limparDadosCatalogo();
+      if (capaObjectUrl) URL.revokeObjectURL(capaObjectUrl);
+      capaObjectUrl = URL.createObjectURL(file);
+      selectedCapaFile = file;
+      const preview = $("#fCapaPrev");
+      preview.src = capaObjectUrl;
+      photoPreviewFigure.hidden = false;
+      btnCapaPreencher.disabled = false;
+      statusCapa.textContent = "Foto anexada e prévia exibida. Clique em “Preencher automaticamente” para ler a capa e consultar os catálogos.";
+      statusCapa.style.color = "";
+      inputCapa.value = "";
+    });
+    btnCapaPreencher.addEventListener("click", async () => {
+      const file = selectedCapaFile;
+      if (!file) return;
+      limparMatches();
+      matchStatusTarget = statusCapa;
+      btnCapaFoto.disabled = true;
+      btnCapaPreencher.disabled = true;
+      btnCapaPreencher.textContent = "Consultando catálogos…";
+      statusCapa.textContent = "Lendo texto visível com Mistral e consultando Google Books/Open Library…";
+      statusCapa.style.color = "";
+      const form = new FormData();
+      form.append("file", file);
       try {
-        const d = await API.postForm("/api/livros/ler-capa", fd);
-        $("#fTitulo" ).value = d.titulo || "";
-        $("#fAutor" ).value = d.autor || "";
-        $("#fIsbn" ).value = d.isbn || "";
-        $("#fAno" ).value = d.ano || "";
-        if (d.genero) $("#fGenero" ).value = d.genero;
-        $("#fSinopse" ).value = d.sinopse || "";
-        statusCapa.textContent = "Preenchido! Confira os dados e salve.";
-        statusCapa.style.color = "var(--ok)";
-      } catch (e) {
-        statusCapa.textContent = e.message;
+        const data = await API.postForm("/api/livros/ler-capa", form);
+        mostrarCorrespondencias(data, statusCapa);
+      } catch (error) {
+        statusCapa.textContent = error.message;
         statusCapa.style.color = "var(--stamp)";
+      } finally {
+        btnCapaFoto.disabled = false;
+        btnCapaPreencher.textContent = "Preencher automaticamente";
+        btnCapaPreencher.disabled = !selectedCapaFile;
       }
     });
 
-    // busca de dados + capa real pelo ISBN (Google Books, sem chave)
-    $("#btnIsbnBuscar" ).addEventListener("click", async () => {
-      const isbn = $("#fIsbn" ).value.trim().replace(/[^0-9Xx]/g, "");
-      const st = $("#isbnStatus" );
-      if (isbn.length < 10) { st.textContent = "Digite um ISBN válido (10 ou 13 dígitos)."; st.style.color = "var(--stamp)"; return; }
-      st.textContent = "Buscando no Google Books…";
-      st.style.color = "";
+    // A busca manual por ISBN usa os mesmos catálogos e a mesma seleção de fonte.
+    $("#btnIsbnBuscar").addEventListener("click", async () => {
+      const isbn = $("#fIsbn").value.trim().replace(/[^0-9Xx]/g, "");
+      const statusIsbn = $("#isbnStatus");
+      if (isbn.length !== 10 && isbn.length !== 13) {
+        statusIsbn.textContent = "Digite um ISBN válido (10 ou 13 caracteres).";
+        statusIsbn.style.color = "var(--stamp)";
+        return;
+      }
+      limparDadosCatalogo();
+      limparMatches();
+      statusIsbn.textContent = "Buscando nos catálogos bibliográficos…";
+      statusIsbn.style.color = "";
       try {
-        const resp = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-        if (!resp.ok) throw new Error("Google Books indisponível no momento.");
-        const data = await resp.json();
-        const vol = data.items && data.items[0] && data.items[0].volumeInfo;
-        if (!vol) { st.textContent = "Nenhum livro encontrado com esse ISBN."; st.style.color = "var(--stamp)"; return; }
-        $("#fTitulo" ).value = vol.title || $("#fTitulo" ).value;
-        $("#fAutor" ).value = (vol.authors || []).join(", ");
-        const ano = vol.publishedDate ? parseInt(vol.publishedDate.slice(0, 4), 10) : null;
-        if (ano && ano >= 1000 && ano <= 2100) $("#fAno" ).value = ano;
-        if (vol.description) {
-          $("#fSinopse" ).value = vol.description.replace(/<[^>]*>/g, "").slice(0, 4000);
-        }
-        const capa = vol.imageLinks && (vol.imageLinks.thumbnail || vol.imageLinks.smallThumbnail);
-        if (capa) {
-          const capaUrl = capa.replace(/^http:/, "https:").replace(/&edge=curl/, "");
-          $("#fCapaUrl" ).value = capaUrl;
-          const prevCapa = $("#fCapaPrev" );
-          prevCapa.src = capaUrl;
-          prevCapa.hidden = false;
-        }
-        st.textContent = "Preenchido pelo Google Books! Confira e salve.";
-        st.style.color = "var(--ok)";
-      } catch (e) {
-        st.textContent = e.message;
-        st.style.color = "var(--stamp)";
+        const data = await API.get(`/api/livros/buscar-isbn?isbn=${encodeURIComponent(isbn)}`);
+        mostrarCorrespondencias(data, statusIsbn);
+      } catch (error) {
+        statusIsbn.textContent = error.message;
+        statusIsbn.style.color = "var(--stamp)";
       }
     });
+
 
     renderTabela();
   }
