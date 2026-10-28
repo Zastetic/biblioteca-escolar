@@ -23,34 +23,36 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 DB = Path(os.environ.get("BIBLIO_DB", RAIZ / "biblioteca.db"))
 
-BRUNO = "987654321sp"
-VICTOR = "1099851476sp"
-JULIA = "1104299045sp"
+# RAs fictícios do seed (alunos de demonstração). Ao rodar numa base de produção,
+# troque pelos RAs reais dos alunos que você quer usar na demonstração.
+ALUNO_1 = "987654321sp"   # Bruno Lima
+ALUNO_2 = "555666777sp"   # Carla Mendes
+ALUNO_3 = "123456789sp"   # Ana Souza
 
 # (livro, aluno, status, dias_solicitacao, dias_emprestimo, dias_prevista, dias_devolucao)
 # dias negativos = passado.
 ROTEIRO = [
     # ativo no prazo
-    ("1984", BRUNO, "ativo", -3, -3, 11, None),
-    ("Harry Potter e a Pedra Filosofal", JULIA, "ativo", -8, -8, 6, None),
+    ("1984", ALUNO_1, "ativo", -3, -3, 11, None),
+    ("Harry Potter e a Pedra Filosofal", ALUNO_3, "ativo", -8, -8, 6, None),
     # ativo atrasado (6 dias) — o painel mostra atraso curto, não abandono
-    ("O Cortiço", BRUNO, "ativo", -20, -20, -6, None),
+    ("O Cortiço", ALUNO_1, "ativo", -20, -20, -6, None),
     # pronto para retirada (solicitado ontem, separado hoje)
-    ("A Menina que Roubava Livros", VICTOR, "pronto", -1, None, None, None),
+    ("A Menina que Roubava Livros", ALUNO_2, "pronto", -1, None, None, None),
     # solicitado hoje — aparece em "solicitações para preparar"
-    ("Torto Arado", JULIA, "solicitado", 0, None, None, None),
+    ("Torto Arado", ALUNO_3, "solicitado", 0, None, None, None),
     # histórico de devoluções
-    ("O Pequeno Príncipe", VICTOR, "devolvido", -24, -24, -10, -11),
-    ("Dom Casmurro", BRUNO, "devolvido", -30, -30, -16, -18),
-    ("A Hora da Estrela", JULIA, "devolvido", -12, -12, 2, -4),
-    ("Vidas Secas", VICTOR, "devolvido", -45, -45, -31, -33),
+    ("O Pequeno Príncipe", ALUNO_2, "devolvido", -24, -24, -10, -11),
+    ("Dom Casmurro", ALUNO_1, "devolvido", -30, -30, -16, -18),
+    ("A Hora da Estrela", ALUNO_3, "devolvido", -12, -12, 2, -4),
+    ("Vidas Secas", ALUNO_2, "devolvido", -45, -45, -31, -33),
     # repetições no histórico: dá corpo ao ranking "mais alugados do mês"
-    ("Dom Casmurro", JULIA, "devolvido", -18, -18, -4, -5),
-    ("Harry Potter e a Pedra Filosofal", BRUNO, "devolvido", -22, -22, -8, -9),
-    ("Torto Arado", VICTOR, "devolvido", -40, -40, -26, -27),
-    ("1984", JULIA, "devolvido", -35, -35, -21, -22),
-    ("O Pequeno Príncipe", BRUNO, "devolvido", -15, -15, -1, -2),
-    ("Dom Casmurro", VICTOR, "devolvido", -55, -55, -41, -42),
+    ("Dom Casmurro", ALUNO_3, "devolvido", -18, -18, -4, -5),
+    ("Harry Potter e a Pedra Filosofal", ALUNO_1, "devolvido", -22, -22, -8, -9),
+    ("Torto Arado", ALUNO_2, "devolvido", -40, -40, -26, -27),
+    ("1984", ALUNO_3, "devolvido", -35, -35, -21, -22),
+    ("O Pequeno Príncipe", ALUNO_1, "devolvido", -15, -15, -1, -2),
+    ("Dom Casmurro", ALUNO_2, "devolvido", -55, -55, -41, -42),
 ]
 
 

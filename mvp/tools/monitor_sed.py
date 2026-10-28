@@ -8,7 +8,7 @@ e deixa registrado quando foi a SED e quando foi a credencial.
 Uso (lê as credenciais que o autoava já guarda, nunca imprime senha):
     ./venv/bin/python tools/monitor_sed.py                 # uma medida
     ./venv/bin/python tools/monitor_sed.py --loop 300      # mede a cada 5 min
-    ./venv/bin/python tools/monitor_sed.py --ra 1099851476sp --ra 1098501007sp
+    ./venv/bin/python tools/monitor_sed.py --ra 555666777sp --ra 1098501007sp
 
 Saída: uma linha por conta no stdout, e o histórico em tools/sed_monitor.log.
 """

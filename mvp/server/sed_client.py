@@ -68,7 +68,7 @@ def chave_aluno(ra: str) -> str:
     """Chave canônica do aluno no banco — UM RA por pessoa, não uma por jeito de digitar.
 
     Sem pontos/traços/espaços, minúscula, sem zeros à esquerda, com o sufixo 'sp':
-    '1099851476', '1099851476sp', '1099851476SP' e '0001099851476sp' caem todos em '1099851476sp'.
+    '555666777', '555666777sp', '555666777SP' e '000555666777sp' caem todos em '555666777sp'.
     É essa chave que vai para `alunos.ra`, `sessoes.ra` e `admins.ra` (as três têm FK/cascade).
     """
     limpo = re.sub(r"[\s.\-/\\]", "", str(ra or "")).lower()

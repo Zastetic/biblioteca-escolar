@@ -787,8 +787,8 @@ def set_config(body: ConfigBody, user: dict = Depends(auth.require_admin)):
 def _aluno_por_ra(conn, ra: str):
     """Acha o aluno pela chave canônica e, se não existir, por qualquer grafia equivalente.
 
-    Cobre os dois sentidos: quem digita '1104299045sp' quando a linha é '1104299045' e quem digita
-    '1104299045' quando a linha é '0001104299045sp'. Devolve a linha `alunos` (ra COMO ESTÁ NO BANCO).
+    Cobre os dois sentidos: quem digita '123456789sp' quando a linha é '123456789' e quem digita
+    '123456789' quando a linha é '000123456789sp'. Devolve a linha `alunos` (ra COMO ESTÁ NO BANCO).
     """
     chave = sed_client.chave_aluno(ra)
     row = conn.execute(
@@ -804,8 +804,8 @@ def _aluno_por_ra(conn, ra: str):
 
 @app.get("/api/admin/alunos/{ra}")
 def consultar_aluno(ra: str, user: dict = Depends(auth.require_admin)):
-    # Aceita o RA em qualquer forma que o aluno costuma digitar (1104299045, 1104299045sp,
-    # 0001104299045sp…) — a chave canônica está em sed_client.chave_aluno.
+    # Aceita o RA em qualquer forma que o aluno costuma digitar (123456789, 123456789sp,
+    # 000123456789sp…) — a chave canônica está em sed_client.chave_aluno.
     conn = db.conectar()
     try:
         aluno = _aluno_por_ra(conn, ra)

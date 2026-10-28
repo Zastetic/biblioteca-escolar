@@ -85,10 +85,10 @@ tabela `alunos` (o espelho do 1º login). Sem linha, a resposta é *"Aluno não 
 feito login ao menos uma vez."* — é requisito do desenho, não bug.
 
 **Chave canônica (08/10/2026).** O espelho era gravado com o RA **cru digitado**, então a mesma pessoa
-virava duas linhas (`1104299045sp` e `0001104299045sp`) e o painel, que casa string exata, errava a busca.
+virava duas linhas (`123456789sp` e `000123456789sp`) e o painel, que casa string exata, errava a busca.
 Agora tudo passa por `sed_client.chave_aluno()` — sem pontos/traços/espaços, minúscula, sem zeros à
-esquerda, com `sp` — e os endpoints de admin aceitam qualquer grafia (`1104299045`, `1104299045sp`,
-`0001104299045sp` caem na mesma pessoa). Bases antigas se corrigem com
+esquerda, com `sp` — e os endpoints de admin aceitam qualquer grafia (`123456789`, `123456789sp`,
+`000123456789sp` caem na mesma pessoa). Bases antigas se corrigem com
 `mvp/tools/migrar_ra_canonico.py --aplicar` (faz backup antes e MOVE empréstimos/sessões/admins para a
 linha canônica antes de apagar as duplicatas).
 
@@ -411,6 +411,16 @@ Objetivo: o site precisava parecer uma biblioteca em uso na frente da banca, nã
 - **Cache**: `index.html` passou a responder `Cache-Control: no-cache`. Sem isso o navegador segurava o HTML
   antigo e continuava rodando o `app.js?v=` velho depois de publicar (aconteceu nesta rodada, no Chrome do
   Okai). O `?v=` do `index.html` deve ser bumpado a cada mudança de front.
+
+### Antes de abrir o repositório ao público (27/10/2026)
+- `mvp/tools/sed_monitor.log` saiu do versionamento **e do histórico** (`git filter-branch`):
+  o arquivo tinha RAs de alunos. Logs em `mvp/tools/*.log` agora estão no `.gitignore`.
+- Os exemplos que citavam RA de aluno de verdade (DOCUMENTACAO, `sed_client.py`, `main.py`,
+  `demo_apresentacao.py`) passaram a usar os RAs fictícios do seed (123456789 / 555666777 / 987654321).
+- O script de demonstração agora usa só os alunos fictícios do seed; a base local deixou de amarrar
+  empréstimos em nome de aluno real.
+- `biblioteca.db`, `backups/` e `.env` continuam fora do repositório (`.gitignore`) — conferido no
+  histórico inteiro com `git rev-list --all --objects`.
 
 ### Pendências conhecidas (não mexidas aqui)
 - **Solicitação "pronta" nunca expira**: `db.expirar_solicitacoes` só trata `status='solicitado'`; um livro

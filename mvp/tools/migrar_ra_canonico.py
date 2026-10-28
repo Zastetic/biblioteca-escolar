@@ -2,7 +2,7 @@
 """Migração única: unifica o RA dos alunos na chave canônica (sed_client.chave_aluno).
 
 Por que existe: até 08/10/2026 o espelho do aluno era gravado com o RA CRU digitado no login,
-então a MESMA pessoa podia virar duas linhas ('1104299045sp' e '0001104299045sp', por exemplo).
+então a MESMA pessoa podia virar duas linhas ('123456789sp' e '000123456789sp', por exemplo).
 Como `admins`, `sessoes` e `emprestimos` referenciam `alunos(ra)`, isso quebrava a busca do painel
 adicionar admin / consultar aluno (match exato de string).
 
