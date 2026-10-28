@@ -18,3 +18,6 @@ backups/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# log de monitor com RAs de alunos
+mvp/tools/*.log
