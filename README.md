@@ -5,12 +5,46 @@ Secretaria Digital (SED SP) — sem tela de cadastro. Duas áreas separadas: **a
 
 Documentação completa do projeto: [`DOCUMENTACAO.md`](DOCUMENTACAO.md).
 
+## Telas
+
+**Login** — RA + senha da SED, sem cadastro (tema claro e escuro):
+
+| Claro | Escuro |
+|---|---|
+| ![Login](capturas/01-login.jpg) | ![Login no tema escuro](capturas/09-login-escuro.jpg) |
+
+**Catálogo do aluno** — busca por título/autor, filtro por gênero e capas reais das obras:
+
+![Catálogo](capturas/02-catalogo.jpg)
+
+**Detalhe do livro** — sinopse, ISBN, exemplares disponíveis e solicitação de empréstimo:
+
+![Detalhe do livro](capturas/03-livro.jpg)
+
+**Meus empréstimos** — status `solicitado` / `pronto` / `ativo` / `atrasado` / `devolvido`:
+
+![Empréstimos do aluno](capturas/06-emprestimos-aluno.jpg)
+
+**Painel administrativo** — situação do acervo, fila de preparação, atrasos e ranking:
+
+![Dashboard administrativo](capturas/04-dashboard-admin.jpg)
+
+**Empréstimos e acervo (admin)** — separar livro, registrar retirada/devolução, cadastrar obra por foto da capa:
+
+![Empréstimos (admin)](capturas/05-emprestimos-admin.jpg)
+
+![Acervo (admin)](capturas/07-acervo-admin.jpg)
+
+**Mobile (390 px)**:
+
+<img src="capturas/08-mobile.jpg" width="300" alt="Catálogo no celular">
+
 ## Stack
 
 - **Backend**: Python 3.11 + FastAPI + SQLite
-- **Frontend**: HTML/CSS/JS puro (sem framework), tema claro "Catálogo Clássico" + tema escuro
-- **Capas**: Google Books por ISBN, com fallback genérico
-- **Deploy**: Cloudflare Tunnel (local na porta 8123)
+- **Frontend**: HTML/CSS/JS puro (sem framework), identidade "Campus Pop", tema claro e escuro
+- **Capas**: arquivos locais em `mvp/web/capas/` (baixadas do Open Library por `mvp/tools/capas_acervo.py`)
+- **Deploy**: Cloudflare Tunnel (serviço local na porta 8123)
 
 ## Como rodar
 
@@ -48,9 +82,18 @@ mvp/
     main.py           # rotas da API (/api/*, /api/admin/*)
     auth.py           # bearer tokens opacos, TTL 24h, hash SHA-256
     db.py             # schema + seed
+    book_catalog.py   # metadados por ISBN / foto da capa (Google Books + Open Library)
     sed_client.py     # validação SED (mock / real) — isolado de propósito
   web/                # frontend (index.html, app.js, estilo.css, tema.js)
+    capas/            # capas das obras, servidas pelo próprio site
+  tools/
+    capas_acervo.py       # baixa capas e cadastra o acervo de demonstração
+    demo_apresentacao.py  # empréstimos com datas relativas a hoje, para demonstrar
+    testar_login_sed.py   # testa a chave da SED sem gastar credencial real
+    monitor_sed.py        # mede a disponibilidade da SED em intervalos
+    migrar_ra_canonico.py # unifica RAs na chave canônica
   tests/              # suíte de testes da API
+capturas/             # telas usadas neste README
 prototipos/           # 10 mockups estáticos (referência visual)
 ```
 
@@ -65,3 +108,4 @@ O contador de exemplares muda dentro de transação, para dois alunos não pegar
 - A chave de assinatura da SED vive só no `.env` (nunca no código nem no repositório).
 - Senhas nunca são logadas nem guardadas em texto plano.
 - Todas as rotas `/api/*` exigem token; rotas `/api/admin/*` exigem papel admin (403 para aluno).
+- Em hostname público, `SED_ENABLED` **precisa** ser `true`: em modo mock o `admin123` do seed entra como admin.
