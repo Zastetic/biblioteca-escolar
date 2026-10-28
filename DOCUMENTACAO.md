@@ -377,3 +377,45 @@ Gemini 2.5, 0 créditos) para extrair título, autor, gênero, ano, ISBN e sinop
 ### Turnstile (adiado de propósito)
 As chaves do autoava são vinculadas ao domínio autoava.us — Turnstile rejeita sitekey em outro domínio.
 Ativar só quando o site tiver domínio próprio (deploy real). O código do backend já aceita o token.
+
+## 17. Preparação para a apresentação de MVP (27/10/2026)
+
+Objetivo: o site precisava parecer uma biblioteca em uso na frente da banca, não um seed de agosto.
+
+### Acervo com capas reais hospedadas no próprio site
+- `mvp/tools/capas_acervo.py` baixa a capa de cada obra do Open Library para `mvp/web/capas/<id>-<slug>.jpg`
+  e grava o caminho relativo em `livros.capa_url` (`capas/...`, servido por `img-src 'self'`). Assim a
+  apresentação **não depende de internet de terceiros** — só do servidor.
+- Busca em duas etapas: `q=` com `language=por` (pega a edição brasileira) e, se falhar, a edição em inglês
+  via mapa `ALIASES`. Entre os candidatos, escolhe o JPEG de maior resolução (mínimo desejado 280 px de largura).
+- Acervo subiu de 12 para **36 obras** (`--semear`, títulos em `ACERVO_EXTRA` com sinopse escrita em PT-BR;
+  a sinopse automática do Open Library vem em inglês e não serve para o público da escola).
+- Rodar de novo: `./venv/bin/python tools/capas_acervo.py --semear --aplicar` (simula sem `--aplicar`).
+
+### Estado de demonstração coerente com a data
+- `mvp/tools/demo_apresentacao.py` reescreve os empréstimos em datas relativas a hoje: 3 ativos (um atrasado
+  em 6 dias), 1 pronto p/ retirada, 1 solicitação pendente e 10 devoluções no histórico — e recalcula
+  `livros.disponiveis`. Antes, todo empréstimo ativo aparecia como "atrasado há 70 dias".
+
+### Correções de interface encontradas nesta rodada
+- **Capas reais não apareciam nas listas de empréstimos**: `_emprestimo_dict` não expunha `capa_url` e as
+  queries não selecionavam `l.capa_url`, então aluno, painel e dashboard desenhavam a capa sintética. Todas
+  as 8 queries que alimentam o dicionário foram ajustadas, e as listas passaram a usar `coverHtml()`.
+- `coverHtml()` marca a capa com `tem-capa` — com imagem real, o título/autor desenhados somem.
+- Selo "Disponível/Esgotado" ficava **atrás** da capa (`.selo` sem `z-index`); agora `z-index:3`.
+- Ficha do livro rotulava o ISBN como "Classificação".
+- Rotas inexistentes mostravam "Página não encontrada"; agora `#/admin` e similares redirecionam para a tela
+  inicial do perfil (e visitante vai para o login).
+- KPI "1 ATRASADOS" virou singular quando o número é 1.
+- "Empréstimos recentes" do dashboard ordenava por `id` (ordem de inserção); agora por `data_solicitacao`.
+- **Cache**: `index.html` passou a responder `Cache-Control: no-cache`. Sem isso o navegador segurava o HTML
+  antigo e continuava rodando o `app.js?v=` velho depois de publicar (aconteceu nesta rodada, no Chrome do
+  Okai). O `?v=` do `index.html` deve ser bumpado a cada mudança de front.
+
+### Pendências conhecidas (não mexidas aqui)
+- **Solicitação "pronta" nunca expira**: `db.expirar_solicitacoes` só trata `status='solicitado'`; um livro
+  separado e não retirado fica reservado para sempre. Exigiria regra nova (prazo de retirada) — decisão do Okai.
+- **ISBNs do seed são fictícios** (`978-85-01-0000X-Y`); as 24 obras novas ficaram sem ISBN.
+- Turma do aluno continua vazia (não vem do `LoginCompletoToken`).
+- Login de demonstração depende da SED real (`SED_ENABLED=true`); em modo mock o `admin123` do seed entra
+  como ADMIN e por isso nunca deve ser usado no hostname público.

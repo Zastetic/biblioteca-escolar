@@ -46,6 +46,10 @@ async def security_headers(request: Request, call_next):
         response.headers["Cache-Control"] = "no-store"
     else:
         response = await call_next(request)
+        # index.html guarda os `?v=` de app.js/estilo.css: se ele ficar em cache,
+        # o navegador continua rodando o JS antigo depois de uma publicação.
+        if request.url.path in ("/", "/index.html"):
+            response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -135,6 +139,7 @@ def _emprestimo_dict(row, prazo_preparacao_dias: int | None = None) -> dict:
         "titulo": row["titulo"],
         "autor": row["autor"],
         "cor": row["cor"],
+        "capa_url": row["capa_url"] if "capa_url" in row.keys() else "",
         "aluno_ra": row["aluno_ra"],
         "aluno_nome": row["aluno_nome"],
         "status": status,
@@ -552,7 +557,7 @@ def meus_emprestimos(user: dict = Depends(auth.get_usuario)):
         cfg = db.get_config(conn)
         db.expirar_solicitacoes(conn, cfg["prazo_preparacao_dias"])
         rows = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
               FROM emprestimos e
               JOIN livros l ON l.id = e.livro_id
               JOIN alunos a ON a.ra = e.aluno_ra
@@ -573,7 +578,7 @@ def listar_emprestimos(
     user: dict = Depends(auth.require_admin),
 ):
     """Admin: todos os empréstimos, com busca livre por nome do aluno ou título do livro."""
-    sql = """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome, a.turma AS aluno_turma
+    sql = """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
             FROM emprestimos e
             JOIN livros l ON l.id = e.livro_id
             JOIN alunos a ON a.ra = e.aluno_ra
@@ -654,19 +659,19 @@ def dashboard(user: dict = Depends(auth.require_admin)):
         total = conn.execute("SELECT COUNT(*) FROM livros").fetchone()[0]
 
         recentes = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
-              ORDER BY e.id DESC LIMIT 6"""
+              ORDER BY e.data_solicitacao DESC, e.id DESC LIMIT 6"""
         ).fetchall()
 
         ranking = conn.execute(
-            """SELECT l.titulo, l.autor, l.cor, COUNT(e.id) AS n
+            """SELECT l.titulo, l.autor, l.cor, l.capa_url, COUNT(e.id) AS n
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id
               GROUP BY e.livro_id ORDER BY n DESC LIMIT 5"""
         ).fetchall()
 
         atrasados_lista = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.status = 'ativo' AND e.data_prevista < ?
               ORDER BY e.data_prevista LIMIT 10""",
@@ -674,14 +679,14 @@ def dashboard(user: dict = Depends(auth.require_admin)):
         ).fetchall()
 
         solicitacoes = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.status = 'solicitado'
               ORDER BY e.data_solicitacao ASC, e.id ASC LIMIT 20"""
         ).fetchall()
 
         prontos_lista = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.status = 'pronto'
               ORDER BY e.data_preparado ASC, e.id ASC LIMIT 20"""
@@ -810,7 +815,7 @@ def consultar_aluno(ra: str, user: dict = Depends(auth.require_admin)):
         cfg = db.get_config(conn)
         db.expirar_solicitacoes(conn, cfg["prazo_preparacao_dias"])
         historico = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.aluno_ra = ? ORDER BY e.data_solicitacao DESC, e.id DESC""",
             (ra,),

@@ -79,7 +79,7 @@ const App = (() => {
     const capa = livro.capa_url
       ? `<img class="capa-img" src="${esc(livro.capa_url)}" alt="${esc(t)}" loading="lazy" referrerpolicy="no-referrer">`
       : "";
-    return `<div class="cover ${extra}" style="--c:${esc(livro.cor || "#7a4a2b")}" title="${esc(t)}">
+    return `<div class="cover ${extra}${capa ? " tem-capa" : ""}" style="--c:${esc(livro.cor || "#7a4a2b")}" title="${esc(t)}">
       ${capa}
       <div class="t">${esc(tituloCurto)}</div>
       <div class="a">${esc(livro.autor || "")}</div>
@@ -179,6 +179,14 @@ const App = (() => {
     "#/admin/alunos": adminAlunosView,
   };
 
+  // rotas curtas/antigas que ainda podem estar salvas em links e favoritos
+  const atalhosRota = {
+    "#/admin": "#/admin/dashboard",
+    "#/livros": "#/catalogo",
+    "#/emprestimos": "#/meus-emprestimos",
+    "#/alunos": "#/admin/alunos",
+  };
+
   async function router() {
     const raw = location.hash || "#/login";
     if (raw !== "#/login") releaseLoginMatrixObserver();
@@ -190,7 +198,13 @@ const App = (() => {
       param = raw.split("/")[2];
     }
     const out = document.getElementById("view");
-    if (!view) { out.innerHTML = `<div class="empty">Página não encontrada.</div>`; return; }
+    if (!view) {
+      // hash desconhecido (ou "#/admin" sem aba): manda para a tela inicial do perfil
+      const u = usuario();
+      location.hash = atalhosRota[raw]
+        || (!logado() ? "#/login" : (u && u.is_admin ? "#/admin/dashboard" : "#/catalogo"));
+      return;
+    }
 
     if (!logado() && raw !== "#/login") {
       location.hash = "#/login";
@@ -439,7 +453,7 @@ const App = (() => {
             <h3>Sinopse</h3>
             <p style="font-size:14.5px;line-height:1.75">${esc(livro.sinopse || "Sinopse não cadastrada.")}</p>
             <div style="margin-top:18px">
-              <div class="ficha-linha"><span class="k">Classificação</span><b>${esc(livro.isbn || "—")}</b></div>
+              <div class="ficha-linha"><span class="k">ISBN</span><b>${esc(livro.isbn || "—")}</b></div>
               <div class="ficha-linha"><span class="k">Exemplares</span><b id="dispLine">${livro.disponiveis} de ${livro.total_exemplares} disponíveis</b></div>
             </div>
           </div>
@@ -511,7 +525,7 @@ const App = (() => {
       const podeCancelar = d.status === "solicitado" || d.status === "pronto";
       return `
         <div class="list-item">
-          <div class="cover sm" style="--c:${esc(d.cor)};pointer-events:none;cursor:default"><div class="t">${esc(d.titulo)}</div></div>
+          <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(d, "sm")}</div>
           <div class="info">
             <div class="t">${esc(d.titulo)}</div>
             <div class="a">${esc(d.autor)}</div>
@@ -563,7 +577,7 @@ const App = (() => {
     function linhaSol(x, acoes) {
       return `
         <div class="list-item" style="padding:12px 0">
-          <div class="cover sm" style="--c:${esc(x.cor)};pointer-events:none;cursor:default"><div class="t">${esc(x.titulo)}</div></div>
+          <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
           <div class="info">
             <div class="t">${esc(x.titulo)}</div>
             <div class="a">${esc(x.aluno_nome)}</div>
@@ -591,7 +605,7 @@ const App = (() => {
         <div class="stat warn" title="Solicitações aguardando você separar o livro"><div class="n">${s.solicitados}</div><div class="l">A preparar</div></div>
         <div class="stat ok" title="Livros separados esperando o aluno buscar no recreio"><div class="n">${s.prontos}</div><div class="l">Pronto p/ retirada</div></div>
         <div class="stat"><div class="n">${s.emprestados}</div><div class="l">Emprestados agora</div></div>
-        <div class="stat warn"><div class="n">${s.atrasados}</div><div class="l">Atrasados</div></div>
+        <div class="stat warn"><div class="n">${s.atrasados}</div><div class="l">${s.atrasados === 1 ? "Atrasado" : "Atrasados"}</div></div>
         <div class="stat ok"><div class="n">${s.disponiveis}</div><div class="l">Exemplares disponíveis</div></div>
         <div class="stat"><div class="n">${s.total_obras}</div><div class="l">Obras no acervo</div></div>
       </div>
@@ -618,7 +632,7 @@ const App = (() => {
           <h3>⚠ Em atraso (${d.atrasados.length})</h3>
           ${d.atrasados.length ? d.atrasados.map(x => `
             <div class="list-item" style="padding:12px 0">
-              <div class="cover sm" style="--c:${esc(x.cor)};pointer-events:none;cursor:default"><div class="t">${esc(x.titulo)}</div></div>
+              <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
               <div class="info">
                 <div class="t">${esc(x.titulo)}</div>
                 <div class="a">${esc(x.aluno_nome)}</div>
@@ -827,7 +841,7 @@ const App = (() => {
 
     function linha(l) {
       return `<tr>
-        <td><div class="cover sm" style="--c:${esc(l.cor)};pointer-events:none;cursor:default"><div class="t">${esc(l.titulo)}</div></div></td>
+        <td><div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(l, "sm")}</div></td>
         <td class="t-title">${esc(l.titulo)}</td><td>${esc(l.autor)}</td><td><span class="tag">${esc(l.genero)}</span></td>
         <td>${l.disponiveis} / ${l.total_exemplares}</td>
         <td><div class="actions">
@@ -1168,7 +1182,7 @@ const App = (() => {
     function itemLista(x, acoes) {
       return `
         <div class="list-item" style="padding:12px 0">
-          <div class="cover sm" style="--c:${esc(x.cor)};pointer-events:none;cursor:default"><div class="t">${esc(x.titulo)}</div></div>
+          <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
           <div class="info">
             <div class="t">${esc(x.titulo)}</div>
             <div class="a">${esc(x.aluno_nome)}</div>
@@ -1253,7 +1267,7 @@ const App = (() => {
         const res = await API.get(`/api/emprestimos?busca=${encodeURIComponent(busca)}&somente_ativos=true`);
         outEl.innerHTML = res.length ? res.map(x => `
           <div class="result-box">
-            <div class="cover sm" style="--c:${esc(x.cor)};pointer-events:none;cursor:default"><div class="t">${esc(x.titulo)}</div></div>
+            <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
             <div class="info">
               <div class="t">${esc(x.titulo)}</div>
               <div class="d"><b>${esc(x.aluno_nome)}</b> · saída ${fmtData(x.data_emprestimo)} · prevista ${fmtData(x.data_prevista)}</div>
