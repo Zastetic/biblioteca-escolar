@@ -455,6 +455,10 @@ const App = (() => {
   // ---------- view: catálogo ----------
   async function catalogoView(out) {
     const u = usuario();
+    const POR_PAGINA = 24;
+    let todos = [];
+    let pagina = 1;
+
     out.innerHTML = `
       <div class="page-head">
         <div>
@@ -476,10 +480,39 @@ const App = (() => {
         </select>
         <button class="btn" id="btnBuscar">Buscar</button>
       </div>
-      <div id="gridOut"></div>`;
+      <div id="prateleiras"></div>
+      <div id="gridOut"></div>
+      <div id="paginacao"></div>`;
 
-    const gridOut = $("#gridOut" );
-    const countEl = $("#catCount" );
+    const prateleiras = $("#prateleiras");
+    const gridOut = $("#gridOut");
+    const paginacao = $("#paginacao");
+    const countEl = $("#catCount");
+
+    function estrelas(livro) {
+      if (!livro.nota_media) return "";
+      const nota = Number(livro.nota_media);
+      const cheias = Math.round(nota);
+      const estrelas = "★".repeat(cheias) + "☆".repeat(Math.max(0, 5 - cheias));
+      const qtd = livro.nota_qtd || 0;
+      return `<span class="nota" title="Nota ${nota.toFixed(1)} com ${qtd} avaliações (${esc(livro.nota_fonte || "catálogo externo")})">
+        <span class="estrelas" aria-hidden="true">${estrelas}</span>
+        <b>${nota.toFixed(1).replace(".", ",")}</b>
+        <span class="nota-qtd">(${qtd})</span>
+      </span>`;
+    }
+
+    function cardHtml(l, classe = "") {
+      return `<div class="livro-card ${classe}" data-livro="${l.id}" role="link" tabindex="0" aria-label="Ver detalhes de ${esc(l.titulo)}">
+          ${coverHtml(l)}
+          <div class="meta">
+            <div class="t">${esc(l.titulo)}</div>
+            <div class="a">${esc(l.autor)}</div>
+            <div class="row"><span class="tag">${esc(l.genero)}</span><span class="disp ${l.disponiveis <= 0 ? "esgotado" : ""}">${l.disponiveis > 0 ? l.disponiveis + " disp." : "Esgotado"}</span></div>
+            ${estrelas(l)}
+          </div>
+        </div>`;
+    }
 
     function skeletonGrid(n = 8) {
       return `<div class="grid-livros">${Array.from({ length: n }, () => `
@@ -493,33 +526,104 @@ const App = (() => {
         </div>`).join("")}</div>`;
     }
 
+    // prateleira horizontal: swipe no celular, setas no desktop
+    function prateleira(titulo, sub, lista) {
+      if (!lista || !lista.length) return "";
+      return `<section class="prateleira" aria-label="${esc(titulo)}">
+        <div class="prateleira-head">
+          <div>
+            <h3>${esc(titulo)}</h3>
+            ${sub ? `<div class="prateleira-sub">${esc(sub)}</div>` : ""}
+          </div>
+          <div class="prateleira-setas">
+            <button type="button" class="seta" data-dir="-1" aria-label="Ver anteriores">‹</button>
+            <button type="button" class="seta" data-dir="1" aria-label="Ver próximos">›</button>
+          </div>
+        </div>
+        <div class="trilho">${lista.map(l => cardHtml(l, "sm")).join("")}</div>
+      </section>`;
+    }
+
+    function renderPagina() {
+      const totalPaginas = Math.max(1, Math.ceil(todos.length / POR_PAGINA));
+      if (pagina > totalPaginas) pagina = totalPaginas;
+      const inicio = (pagina - 1) * POR_PAGINA;
+      const fatia = todos.slice(inicio, inicio + POR_PAGINA);
+      gridOut.innerHTML = fatia.length
+        ? `<div class="grid-livros">${fatia.map(l => cardHtml(l)).join("")}</div>`
+        : `<div class="empty">Nenhuma obra encontrada.</div>`;
+
+      if (totalPaginas <= 1) {
+        paginacao.innerHTML = "";
+        return;
+      }
+      paginacao.innerHTML = `
+        <div class="paginacao">
+          <button type="button" class="btn sm" data-pagina="${pagina - 1}" ${pagina === 1 ? "disabled" : ""}>‹ Anterior</button>
+          <span class="pagina-info">Página <b>${pagina}</b> de ${totalPaginas}
+            <span class="pagina-faixa">· ${inicio + 1}–${inicio + fatia.length} de ${todos.length}</span></span>
+          <button type="button" class="btn sm" data-pagina="${pagina + 1}" ${pagina === totalPaginas ? "disabled" : ""}>Próxima ›</button>
+        </div>`;
+    }
+
+    async function carregarPrateleiras() {
+      try {
+        const d = await API.get("/api/catalogo");
+        const blocos = [
+          prateleira("Mais alugados", "O que os alunos estão levando para casa", d.mais_alugados),
+          prateleira("Melhores avaliados", "Nota média do catálogo externo (Open Library / Google Livros)", d.melhores_avaliados),
+          prateleira("Novidades no acervo", "Últimas obras catalogadas", d.novidades),
+        ].filter(Boolean);
+        prateleiras.innerHTML = blocos.length
+          ? blocos.join("")
+          : "";
+        prateleiras.querySelectorAll(".prateleira").forEach((sec) => {
+          const trilho = $(".trilho", sec);
+          sec.querySelectorAll(".seta").forEach((b) => b.addEventListener("click", () => {
+            const passo = Math.max(220, trilho.clientWidth * 0.8);
+            trilho.scrollBy({ left: Number(b.dataset.dir) * passo, behavior: "smooth" });
+          }));
+        });
+      } catch (e) {
+        prateleiras.innerHTML = "";
+      }
+    }
+
     async function carregar() {
       const q = encodeURIComponent($("#busca").value.trim());
       const g = encodeURIComponent($("#fGenero").value);
+      const filtrando = !!(q || g);
       countEl.textContent = "Buscando…";
       gridOut.innerHTML = skeletonGrid();
+      paginacao.innerHTML = "";
+      if (filtrando) prateleiras.innerHTML = ""; // busca/filtro: só resultado
       let dados;
       try { dados = await API.get(`/api/livros?q=${q}&genero=${g}`); }
       catch (e) { gridOut.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-      countEl.textContent = `${dados.length} obra(s) · ${dados.filter(l => l.disponiveis > 0).length} disponíveis`;
-      if (!dados.length) { gridOut.innerHTML = `<div class="empty">Nenhuma obra encontrada.</div>`; return; }
-      gridOut.innerHTML = `<div class="grid-livros">${dados.map(l => `
-        <div class="livro-card" data-livro="${l.id}" role="link" tabindex="0" aria-label="Ver detalhes de ${esc(l.titulo)}">
-          ${coverHtml(l)}
-          <div class="meta">
-            <div class="t">${esc(l.titulo)}</div>
-            <div class="a">${esc(l.autor)}</div>
-            <div class="row"><span class="tag">${esc(l.genero)}</span><span class="disp ${l.disponiveis <= 0 ? "esgotado" : ""}">${l.disponiveis > 0 ? l.disponiveis + " disp." : "Esgotado"}</span></div>
-          </div>
-        </div>`).join("")}</div>`;
+      todos = dados;
+      pagina = 1;
+      countEl.textContent = `${dados.length} obra(s) · ${dados.filter(l => l.disponiveis > 0).length} disponíveis`
+        + (filtrando ? "" : " · deslize as prateleiras ou use a grade abaixo");
+      if (!dados.length) {
+        gridOut.innerHTML = `<div class="empty">Nenhuma obra encontrada.</div>`;
+        return;
+      }
+      renderPagina();
+      if (!filtrando) carregarPrateleiras(); // não espera o carrossel para mostrar a grade
     }
 
-    // CSP estrita bloqueia onclick inline — navegação por delegação de evento
-    gridOut.addEventListener("click", (e) => {
+    // navegação dos cards (CSP estrita bloqueia onclick inline)
+    out.addEventListener("click", (e) => {
       const card = e.target.closest(".livro-card");
       if (card && card.dataset.livro) location.hash = `#/livro/${card.dataset.livro}`;
+      const botao = e.target.closest("[data-pagina]");
+      if (botao && !botao.disabled) {
+        pagina = Number(botao.dataset.pagina);
+        renderPagina();
+        gridOut.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
-    gridOut.addEventListener("keydown", (e) => {
+    out.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
       const card = e.target.closest(".livro-card");
       if (card && card.dataset.livro) { e.preventDefault(); location.hash = `#/livro/${card.dataset.livro}`; }
@@ -533,9 +637,10 @@ const App = (() => {
     });
     $("#btnBuscar").addEventListener("click", carregar);
     $("#busca").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { clearTimeout(buscaTimer); carregar(); }
+      if (e.key === "Enter") { e.preventDefault(); carregar(); }
     });
     $("#fGenero").addEventListener("change", carregar);
+
     await carregar();
   }
 

@@ -115,6 +115,9 @@ CREATE TABLE IF NOT EXISTS livros (
     cor TEXT NOT NULL,
     capa_url TEXT DEFAULT '',
     sinopse TEXT DEFAULT '',
+    nota_media REAL,
+    nota_qtd INTEGER NOT NULL DEFAULT 0,
+    nota_fonte TEXT NOT NULL DEFAULT '',
     total_exemplares INTEGER NOT NULL DEFAULT 1 CHECK (total_exemplares >= 0),
     disponiveis INTEGER NOT NULL DEFAULT 1 CHECK (disponiveis >= 0),
     criado_em TEXT NOT NULL DEFAULT (datetime('now'))
@@ -152,7 +155,18 @@ def agora_iso() -> str:
 
 
 def migrar(conn: sqlite3.Connection) -> None:
-    """Migra bancos antigos: fluxo solicitação→preparo→retirada + capa_url."""
+    """Migra bancos antigos: fluxo solicitação→preparo→retirada + capa_url + notas."""
+    # Notas externas (Open Library / Google Books) guardadas por livro
+    cols_liv = {r["name"] for r in conn.execute("PRAGMA table_info(livros)").fetchall()}
+    for coluna, ddl in (
+        ("nota_media", "ALTER TABLE livros ADD COLUMN nota_media REAL"),
+        ("nota_qtd", "ALTER TABLE livros ADD COLUMN nota_qtd INTEGER NOT NULL DEFAULT 0"),
+        ("nota_fonte", "ALTER TABLE livros ADD COLUMN nota_fonte TEXT NOT NULL DEFAULT ''"),
+    ):
+        if coluna not in cols_liv:
+            conn.execute(ddl)
+    conn.commit()
+
     # Passo 1: emprestimos (status + datas novas)
     cols_emp = {r["name"] for r in conn.execute("PRAGMA table_info(emprestimos)").fetchall()}
     if "status" not in cols_emp:

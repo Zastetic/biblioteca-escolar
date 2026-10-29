@@ -478,3 +478,26 @@ resultado parecia wireframe. Agora a linha estrutural tem token próprio:
   foco de input com halo limão, hover de tabela esverdeado.
 
 O modo claro foi conferido depois da troca (mesmos valores visuais de antes).
+
+## 20. Catálogo com prateleiras + notas externas — 28/10/2026
+
+Decisão de produto: **híbrido**, não "Netflix puro". Carrossel resolve descoberta; aluno de biblioteca
+normalmente já sabe o que procura, então grade + filtro continuam sendo o caminho principal.
+
+- `GET /api/catalogo` (autenticado) devolve `mais_alugados` (contagem real de empréstimos),
+  `melhores_avaliados` e `novidades` (últimas catalogadas).
+- **Notas**: `livros.nota_media/nota_qtd/nota_fonte`, preenchidas por `tools/notas_acervo.py`.
+  Fonte primária é o Open Library (`search.json` com `ratings_average`/`ratings_count`; também existe
+  `works/<id>/ratings.json` por obra). O Google Books tem `averageRating`/`ratingsCount` no `volumeInfo`
+  (é o campo que aparece no preenchimento automático), mas a API sem chave responde **429** neste IP — o
+  script tenta Google por ISBN e cai para o Open Library. Cobertura medida: **34 de 36 obras**.
+- Títulos brasileiros quase nunca têm nota na edição nacional; o script usa mapa `ALIASES` (título em
+  inglês) e fica com o candidato de **maior número de avaliações**, então "A Revolução dos Bichos" pega a
+  nota de *Animal Farm* (604 avaliações) em vez de 2 avaliações da edição PT.
+- Ranking usa nota ponderada `(media*qtd + 4*25)/(qtd+25)` — sem isso um livro com 5 avaliações de 5,0
+  passaria na frente de um com 405 de 4,3.
+- Front: três prateleiras com deslize horizontal (setas no desktop, swipe no celular, ocultas abaixo de
+  760 px) + grade paginada de 24 por página (6×4). Busca ou filtro de gênero escondem as prateleiras —
+  é o modo "quero achar este livro".
+- **Sem nota inventada**: a prateleira diz que a nota é do catálogo externo. Avaliação dos próprios alunos
+  (estrelas + comentário) exigiria tabela nova e ficou fora deste escopo.

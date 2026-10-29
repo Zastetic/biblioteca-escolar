@@ -89,6 +89,7 @@ mvp/
   tools/
     capas_acervo.py       # baixa capas e cadastra o acervo de demonstração
     demo_apresentacao.py  # empréstimos com datas relativas a hoje, para demonstrar
+    notas_acervo.py       # notas externas (Open Library/Google) para a prateleira de avaliados
     testar_login_sed.py   # testa a chave da SED sem gastar credencial real
     monitor_sed.py        # mede a disponibilidade da SED em intervalos
     migrar_ra_canonico.py # unifica RAs na chave canônica

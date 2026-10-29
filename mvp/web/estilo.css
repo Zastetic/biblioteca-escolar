@@ -865,3 +865,28 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 :root[data-theme="dark"] .back,
 :root[data-theme="dark"] .span-link{color:var(--acid)}
 :root[data-theme="dark"] .login-foot .sedsig{border-color:var(--line)}
+
+/* ===== catálogo: prateleiras, estrelas e paginação ===== */
+.prateleira{margin:0 0 34px}
+.prateleira-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 14px}
+.prateleira-head h3{font-family:var(--serif);font-size:19px;letter-spacing:-.02em}
+.prateleira-sub{font-size:11.5px;color:var(--ink-soft);margin-top:3px}
+.prateleira-setas{display:flex;gap:8px}
+.seta{width:38px;height:38px;border:1px solid var(--line-soft);border-radius:50%;background:transparent;color:var(--ink);font-size:18px;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.seta:hover{background:var(--stamp);color:var(--paper);border-color:var(--stamp)}
+.trilho{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 12px;scrollbar-width:thin}
+.trilho > .livro-card{flex:0 0 168px;scroll-snap-align:start}
+.livro-card.sm .meta .t{font-size:13.5px}
+.nota{display:inline-flex;align-items:center;gap:6px;margin-top:7px;font-size:11px;color:var(--ink-soft)}
+.nota .estrelas{color:#e8b33f;letter-spacing:1px}
+.nota b{color:var(--ink);font-size:11.5px}
+:root[data-theme="dark"] .nota .estrelas{color:var(--acid)}
+.paginacao{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:30px;flex-wrap:wrap}
+.pagina-info{font-size:12.5px;color:var(--ink-soft)}
+.pagina-info b{color:var(--ink)}
+.pagina-faixa{opacity:.8}
+@media(max-width:760px){
+  .trilho > .livro-card{flex:0 0 138px}
+  .prateleira-setas{display:none}
+  .pagina-faixa{display:none}
+}

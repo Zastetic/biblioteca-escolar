@@ -246,7 +246,7 @@ def listar_livros(
     genero: str = Query(default="", max_length=50),
     user: dict = Depends(auth.get_usuario),
 ):
-    sql = "SELECT id, titulo, autor, genero, ano, isbn, cor, capa_url, sinopse, total_exemplares, disponiveis FROM livros WHERE 1=1"
+    sql = "SELECT id, titulo, autor, genero, ano, isbn, cor, capa_url, sinopse, total_exemplares, disponiveis, nota_media, nota_qtd, nota_fonte FROM livros WHERE 1=1"
     params: list = []
     if q:
         sql += " AND (titulo LIKE ? OR autor LIKE ?)"
@@ -263,12 +263,48 @@ def listar_livros(
     return [dict(r) for r in rows]
 
 
+@app.get("/api/catalogo")
+def catalogo_destaques(user: dict = Depends(auth.get_usuario)):
+    """Prateleiras do catálogo: mais alugados, melhores avaliados e novidades.
+
+    A nota é da fonte externa (Open Library / Google Livros), não dos alunos.
+    Para o ranking usa nota ponderada: (media*qtd + 4*25)/(qtd+25), que evita um livro
+    com 2 avaliações de 5,0 passar na frente de um com 400 avaliações e 4,3.
+    """
+    COLS = ("id, titulo, autor, genero, ano, isbn, cor, capa_url, sinopse,"
+            " total_exemplares, disponiveis, nota_media, nota_qtd, nota_fonte")
+    conn = db.conectar()
+    try:
+        mais = conn.execute(
+            f"""SELECT l.{COLS.replace(', ', ', l.')}, COUNT(e.id) AS alugueis
+                  FROM livros l LEFT JOIN emprestimos e ON e.livro_id = l.id
+                 GROUP BY l.id HAVING alugueis > 0
+                 ORDER BY alugueis DESC, l.titulo COLLATE NOCASE LIMIT 8"""
+        ).fetchall()
+        notas = conn.execute(
+            f"""SELECT l.{COLS.replace(', ', ', l.')},
+                       (l.nota_media * l.nota_qtd + 4.0 * 25) / (l.nota_qtd + 25.0) AS score
+                  FROM livros l
+                 WHERE l.nota_media IS NOT NULL AND l.nota_qtd >= 3
+                 ORDER BY score DESC, l.nota_qtd DESC LIMIT 8"""
+        ).fetchall()
+        novos = conn.execute(
+            f"SELECT {COLS} FROM livros ORDER BY id DESC LIMIT 8"
+        ).fetchall()
+    finally:
+        conn.close()
+    return {
+        "mais_alugados": [dict(r) for r in mais],
+        "melhores_avaliados": [dict(r) for r in notas],
+        "novidades": [dict(r) for r in novos],
+    }
+
 @app.get("/api/livros/{livro_id}")
 def detalhe_livro(livro_id: int, user: dict = Depends(auth.get_usuario)):
     conn = db.conectar()
     try:
         row = conn.execute(
-            "SELECT id, titulo, autor, genero, ano, isbn, cor, capa_url, sinopse, total_exemplares, disponiveis"
+            "SELECT id, titulo, autor, genero, ano, isbn, cor, capa_url, sinopse, total_exemplares, disponiveis, nota_media, nota_qtd, nota_fonte"
             " FROM livros WHERE id = ?",
             (livro_id,),
         ).fetchone()
