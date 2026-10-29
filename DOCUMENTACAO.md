@@ -501,3 +501,27 @@ normalmente já sabe o que procura, então grade + filtro continuam sendo o cami
   é o modo "quero achar este livro".
 - **Sem nota inventada**: a prateleira diz que a nota é do catálogo externo. Avaliação dos próprios alunos
   (estrelas + comentário) exigiria tabela nova e ficou fora deste escopo.
+
+## 21. Turma/série do aluno: por que NÃO vem da SED (28/10/2026)
+
+Testado de ponta a ponta, com prova, na ordem:
+
+1. **Token da API não abre a área do aluno.** `LoginCompletoToken` devolve um JWT do BFF
+   (`sedintegracoes`, 988 chars) que serve para as APIs, não para o site `sed.educacao.sp.gov.br`.
+   `GET /GradeAulaAluno/Index` com `Authorization: Bearer <jwt>` → **HTTP 200 com 45 KB da home de login**,
+   redirecionando para `https://sed.educacao.sp.gov.br/` — idêntico a pedir sem nada.
+2. **O login por formulário não existe mais.** `GET /Logon/Logon/` devolve 45 KB sem campo `usuario`
+   (só o formulário de "Definir senha"); `POST` com `usuario/senha/tipo=A/__RequestVerificationToken`
+   volta **200 com 0 bytes** e não cria o cookie `SED=...`. A página agora é **SSO gov.br** (barra
+   "Cidadão SP /governosp"), como o risco já registrado no item 2.
+3. **O payload da própria API não traz turma.** `DadosUsuario` tem `CD_USUARIO`, `LOGIN`, `NAME`,
+   `NR_CPF`, `EMAIL`, `EMAIL_GOOGLE`, `EMAIL_MS`, `NM_NICK`, `PERFIS` — nenhum campo de série/turma/escola,
+   e o array `A` veio vazio.
+
+Conclusão: puxar `GradeAulaAluno` exigiria sessão gov.br do aluno, que não temos do lado do servidor.
+
+**Solução adotada (sem scraping e sem gov.br):** a secretaria informa a turma uma vez.
+- `PUT /api/admin/alunos/{ra}/turma` — campo "Turma / série" no painel, ao consultar o aluno.
+- `POST /api/admin/alunos/importar-turmas` — cola em lote `RA;turma` (aceita `;`, `,`, tab e a forma
+  `RA;nome;turma`), com relatório de atualizados e RAs ainda sem login.
+- Turma passa a aparecer nas telas que já a usavam (painel do aluno, listas de empréstimo, CSV).
