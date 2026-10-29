@@ -125,6 +125,7 @@ const App = (() => {
       right.innerHTML = `
         <div class="header-user">
           <span class="pill">RA <b>${esc(u.ra)}</b> · ${papel}</span>
+          ${u.turma ? `<span class="pill turma-pill" title="Turma informada pela Secretaria Digital">${esc(u.turma)}</span>` : ""}
           ${u.is_admin ? `<span class="pill solic" id="pillSolic" hidden title="Ver solicitações" style="cursor:pointer"></span>` : ""}
           <button class="sair" id="btnSair">Sair</button>
         </div>
@@ -792,7 +793,7 @@ const App = (() => {
           <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
           <div class="info">
             <div class="t">${esc(x.titulo)}</div>
-            <div class="a">${esc(x.aluno_nome)}</div>
+            <div class="a">${esc(x.aluno_nome)}${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}</div>
             <div class="d">${acoes.desc}</div>
           </div>
           ${badge(x.status)}
@@ -834,7 +835,7 @@ const App = (() => {
         <h3>Prontos aguardando retirada (${d.prontos.length})</h3>
         <p class="hint" style="margin-bottom:10px">Aluno pega no balcão durante o recreio. Registre a retirada ao entregar — o prazo de devolução começa a contar.</p>
         ${d.prontos.length ? d.prontos.map(x => linhaSol(x, {
-          desc: `Separado em <b>${fmtData(x.data_preparado)}</b> para <b>${esc(x.aluno_nome)}</b>`,
+          desc: `Separado em <b>${fmtData(x.data_preparado)}</b> para <b>${esc(x.aluno_nome)}</b>${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}`,
           botoes: botaoRetirar(x) + botaoCancelar(x),
         })).join("")
         : `<div class="empty" style="padding:18px">Nenhum livro separado aguardando retirada.</div>`}
@@ -847,7 +848,7 @@ const App = (() => {
               <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
               <div class="info">
                 <div class="t">${esc(x.titulo)}</div>
-                <div class="a">${esc(x.aluno_nome)}</div>
+                <div class="a">${esc(x.aluno_nome)}${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}</div>
                 <div class="d"><b>${x.dias_atraso} dia(s)</b> de atraso</div>
               </div>
               ${badge("atrasado")}
@@ -1379,7 +1380,7 @@ const App = (() => {
       <div class="card">
         <h3>Empréstimos ativos</h3>
         <div class="table-wrap"><table class="table">
-          <thead><tr><th>Aluno</th><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th><th style="text-align:right">Ação</th></tr></thead>
+          <thead><tr><th>Aluno</th><th>Turma</th><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th><th style="text-align:right">Ação</th></tr></thead>
           <tbody id="ativosTbody"></tbody>
         </table></div>
       </div>
@@ -1397,7 +1398,7 @@ const App = (() => {
           <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
           <div class="info">
             <div class="t">${esc(x.titulo)}</div>
-            <div class="a">${esc(x.aluno_nome)}</div>
+            <div class="a">${esc(x.aluno_nome)}${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}</div>
             <div class="d">${acoes.desc}</div>
           </div>
           ${badge(x.status)}
@@ -1597,6 +1598,21 @@ const App = (() => {
   // ---------- boot ----------
   window.addEventListener("hashchange", router);
   window.addEventListener("DOMContentLoaded", () => {
+    // sessão antiga pode ter sido gravada antes de a turma existir: revalida uma vez
+    if (logado()) {
+      API.get("/api/auth/me")
+        .then((r) => {
+          if (!r || !r.usuario) return;
+          const atual = usuario() || {};
+          const mudouTurma = (atual.turma || "") !== (r.usuario.turma || "");
+          const mudouNome = (atual.nome || "") !== (r.usuario.nome || "");
+          if (mudouTurma || mudouNome) {
+            API.salvarSessao(API.token(), Object.assign({}, atual, r.usuario));
+            renderHeader();
+          }
+        })
+        .catch(() => {});
+    }
     const bh = document.getElementById("brandHome");
     if (bh) bh.addEventListener("click", () => { location.hash = logado() ? "#/catalogo" : "#/login"; });
     if (!location.hash) location.hash = logado() ? (usuario().is_admin ? "#/admin/dashboard" : "#/catalogo") : "#/login";

@@ -890,3 +890,8 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
   .prateleira-setas{display:none}
   .pagina-faixa{display:none}
 }
+
+/* pill da turma/série (aluno e admin) */
+.header-user .pill.turma-pill{border-color:var(--stamp);color:var(--stamp);background:transparent}
+:root[data-theme="dark"] .header-user .pill.turma-pill{border-color:var(--acid);color:var(--acid)}
+@media(max-width:760px){.header-user .pill.turma-pill{font-size:10px;padding:3px 8px}}

@@ -535,3 +535,13 @@ Implementação em `sed_client.py`: `_turma_da_matricula()` roda depois do login
 anterior, prefere a matrícula com `situacaoAluno = Ativo` e formata para `3ª série B · Manhã`
 (`_formatar_turma`). Falha em silêncio: sem turma o login continua funcionando e a UI mostra "—".
 O espelho (`alunos.turma`) só é sobrescrito quando vem algo.
+
+### Onde a série aparece na interface
+
+- **Aluno**: pill ao lado do RA no cabeçalho (`3ª série B · Manhã`), para qualquer tela logada. Sessões
+  antigas (gravadas antes da extração existir) se atualizam sozinhas: no boot o app chama `/api/auth/me`
+  e regrava o usuário quando a turma mudou.
+- **Bibliotecário**: coluna **Turma** na tabela de empréstimos, turma ao lado do nome nas listas do
+  painel (solicitações, prontos, atrasos) e no card "Separado em … para …", além da consulta de aluno,
+  do CSV e — com a permissão de admin — do mesmo pill no cabeçalho.
+- `_emprestimo_dict` passou a expor `aluno_turma`; as 7 consultas que o alimentam trazem `a.turma`.

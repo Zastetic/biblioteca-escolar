@@ -144,6 +144,7 @@ def _emprestimo_dict(row, prazo_preparacao_dias: int | None = None) -> dict:
         "capa_url": row["capa_url"] if "capa_url" in row.keys() else "",
         "aluno_ra": row["aluno_ra"],
         "aluno_nome": row["aluno_nome"],
+        "aluno_turma": row["aluno_turma"] if "aluno_turma" in row.keys() else "",
         "status": status,
         "data_solicitacao": row["data_solicitacao"],
         "data_preparado": row["data_preparado"],
@@ -612,7 +613,7 @@ def meus_emprestimos(user: dict = Depends(auth.get_usuario)):
         cfg = db.get_config(conn)
         db.expirar_solicitacoes(conn, cfg["prazo_preparacao_dias"])
         rows = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
               FROM emprestimos e
               JOIN livros l ON l.id = e.livro_id
               JOIN alunos a ON a.ra = e.aluno_ra
@@ -633,7 +634,7 @@ def listar_emprestimos(
     user: dict = Depends(auth.require_admin),
 ):
     """Admin: todos os empréstimos, com busca livre por nome do aluno ou título do livro."""
-    sql = """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
+    sql = """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma, a.turma AS aluno_turma
             FROM emprestimos e
             JOIN livros l ON l.id = e.livro_id
             JOIN alunos a ON a.ra = e.aluno_ra
@@ -714,7 +715,7 @@ def dashboard(user: dict = Depends(auth.require_admin)):
         total = conn.execute("SELECT COUNT(*) FROM livros").fetchone()[0]
 
         recentes = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               ORDER BY e.data_solicitacao DESC, e.id DESC LIMIT 6"""
         ).fetchall()
@@ -726,7 +727,7 @@ def dashboard(user: dict = Depends(auth.require_admin)):
         ).fetchall()
 
         atrasados_lista = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.status = 'ativo' AND e.data_prevista < ?
               ORDER BY e.data_prevista LIMIT 10""",
@@ -734,14 +735,14 @@ def dashboard(user: dict = Depends(auth.require_admin)):
         ).fetchall()
 
         solicitacoes = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.status = 'solicitado'
               ORDER BY e.data_solicitacao ASC, e.id ASC LIMIT 20"""
         ).fetchall()
 
         prontos_lista = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.status = 'pronto'
               ORDER BY e.data_preparado ASC, e.id ASC LIMIT 20"""
@@ -870,7 +871,7 @@ def consultar_aluno(ra: str, user: dict = Depends(auth.require_admin)):
         cfg = db.get_config(conn)
         db.expirar_solicitacoes(conn, cfg["prazo_preparacao_dias"])
         historico = conn.execute(
-            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome
+            """SELECT e.*, l.titulo, l.autor, l.cor, l.capa_url, a.nome AS aluno_nome, a.turma AS aluno_turma
               FROM emprestimos e JOIN livros l ON l.id = e.livro_id JOIN alunos a ON a.ra = e.aluno_ra
               WHERE e.aluno_ra = ? ORDER BY e.data_solicitacao DESC, e.id DESC""",
             (ra,),
