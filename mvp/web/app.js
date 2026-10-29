@@ -341,14 +341,21 @@ const App = (() => {
       b.textContent = rotulo || "Entrar na biblioteca";
     }
 
-    // Enquanto o anti-bot estiver ativo e sem token, o botão fica travado:
-    // o endpoint de login exige `cf_turnstile_token`, então não adianta clicar antes.
-    function sincronizarBotao() {
-      if (!captchaAtivo) return;
-      if (captchaFalhou) return estadoBotao(true, "Verificação falhou");
-      if (turnstileToken) return estadoBotao(false);
-      return estadoBotao(true, "Aguardando verificação…");
+    // O botão só fica clicável quando dá para entrar: RA + senha preenchidos e,
+    // se o anti-bot estiver ativo, token do captcha já resolvido (o endpoint exige).
+    function camposPreenchidos() {
+      const ra = ($("#loginRa") || {}).value || "";
+      const senha = ($("#loginSenha") || {}).value || "";
+      return !!ra.trim() && !!senha;
     }
+
+    function atualizarBotao() {
+      if (captchaFalhou) return estadoBotao(true, "Verificação falhou");
+      if (!camposPreenchidos()) return estadoBotao(true);
+      if (captchaAtivo && !turnstileToken) return estadoBotao(true, "Aguardando verificação…");
+      return estadoBotao(false);
+    }
+    const sincronizarBotao = atualizarBotao;
 
     async function prepararCaptcha() {
       let sitekey = "";
@@ -360,7 +367,7 @@ const App = (() => {
       }
       if (!sitekey) return; // servidor sem anti-bot: login segue como antes
       captchaAtivo = true;
-      estadoBotao(true, "Aguardando verificação…");
+      atualizarBotao();
       captchaSitekey = sitekey;
       const alvo = $("#cfTurnstile");
       const dica = $("#cfHint");
@@ -393,6 +400,12 @@ const App = (() => {
       }
     }
     prepararCaptcha();
+
+    ["#loginRa", "#loginSenha"].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.addEventListener("input", atualizarBotao);
+    });
+    atualizarBotao();
 
     $(".theme-toggle", document)?.addEventListener("click", () => {
       // o widget do Turnstile não troca de tema sozinho: recria no tema atual
@@ -429,12 +442,12 @@ const App = (() => {
         toast(`Bem-vindo, ${r.usuario.nome.split(" ")[0]}!`, "ok");
       } catch (err) {
         showErr(err.message);
-        btn.disabled = false; btn.textContent = "Entrar na biblioteca"; btn.classList.remove("loading");
+        btn.classList.remove("loading");
         if (captchaAtivo && window.turnstile && turnstileWidget !== null) {
           turnstileToken = "";
           try { window.turnstile.reset(turnstileWidget); } catch (e2) { /* nada */ }
-          sincronizarBotao();
         }
+        atualizarBotao();
       }
     });
   }

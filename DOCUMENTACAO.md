@@ -454,5 +454,10 @@ qualquer erro de outra pessoa travava a conta para todo mundo. Com captcha, o bl
   Ao editar o `.env` por script, cuidado com o BOM do `.env.local`: copiar o valor errado deixou a sitekey
   vazia e o widget não montava (sintoma: `/api/publico` devolvendo `""`).
 
+- **Estado do botão de entrar**: ele só fica clicável com RA **e** senha preenchidos e, quando o anti-bot
+  está ativo, com o token do captcha já resolvido (o endpoint devolve 400 sem token, então clique antecipado
+  só geraria erro). Enquanto o widget resolve, o rótulo é "Aguardando verificação…"; se o captcha falha,
+  "Verificação falhou" e o botão continua travado.
+
 Prova medida no domínio público: token real do widget (730 chars) → login com senha errada devolveu
 **401 da SED** (captcha aceito); sem token → **400 anti-bot**.
