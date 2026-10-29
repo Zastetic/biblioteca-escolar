@@ -149,7 +149,7 @@ const App = (() => {
           .catch(() => {});
       }
     } else {
-      sub.textContent = "Sistema de empréstimos · 2026";
+      sub.textContent = "Biblioteca escolar · 2026";
       ribbon.textContent = "Secretaria de Educação · Acervo aberto · Devolução em até 14 dias";
       right.innerHTML = `
         <button class="theme-toggle" id="themeToggle"><span id="themeIcon">☾</span> <span id="themeLabel">Escuro</span></button>`;
@@ -333,6 +333,23 @@ const App = (() => {
     let captchaAtivo = false;
     let captchaFalhou = false;
 
+    function estadoBotao(travado, rotulo) {
+      const b = $("#loginBtn");
+      if (!b) return;
+      b.disabled = !!travado;
+      b.classList.toggle("loading", !!travado && !!rotulo);
+      b.textContent = rotulo || "Entrar na biblioteca";
+    }
+
+    // Enquanto o anti-bot estiver ativo e sem token, o botão fica travado:
+    // o endpoint de login exige `cf_turnstile_token`, então não adianta clicar antes.
+    function sincronizarBotao() {
+      if (!captchaAtivo) return;
+      if (captchaFalhou) return estadoBotao(true, "Verificação falhou");
+      if (turnstileToken) return estadoBotao(false);
+      return estadoBotao(true, "Aguardando verificação…");
+    }
+
     async function prepararCaptcha() {
       let sitekey = "";
       try {
@@ -343,6 +360,7 @@ const App = (() => {
       }
       if (!sitekey) return; // servidor sem anti-bot: login segue como antes
       captchaAtivo = true;
+      estadoBotao(true, "Aguardando verificação…");
       captchaSitekey = sitekey;
       const alvo = $("#cfTurnstile");
       const dica = $("#cfHint");
@@ -364,12 +382,13 @@ const App = (() => {
           sitekey,
           language: "pt-BR",
           theme: document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light",
-          callback: (t) => { turnstileToken = t; },
-          "expired-callback": () => { turnstileToken = ""; },
-          "error-callback": () => { turnstileToken = ""; },
+          callback: (t) => { turnstileToken = t; captchaFalhou = false; sincronizarBotao(); },
+          "expired-callback": () => { turnstileToken = ""; sincronizarBotao(); },
+          "error-callback": () => { turnstileToken = ""; sincronizarBotao(); },
         });
       } catch (e) {
         captchaFalhou = true;
+        estadoBotao(true, "Verificação falhou");
         showErr("Não foi possível carregar a verificação anti-robô. Recarregue a página.");
       }
     }
@@ -385,8 +404,8 @@ const App = (() => {
         sitekey: captchaSitekey,
         language: "pt-BR",
         theme: t,
-        callback: (tok) => { turnstileToken = tok; },
-        "expired-callback": () => { turnstileToken = ""; },
+        callback: (tok) => { turnstileToken = tok; captchaFalhou = false; sincronizarBotao(); },
+        "expired-callback": () => { turnstileToken = ""; sincronizarBotao(); },
       });
     });
 
@@ -398,7 +417,7 @@ const App = (() => {
       if (!ra || !senha) { showErr("Preencha o RA e a senha para continuar."); return; }
       if (captchaAtivo) {
         if (captchaFalhou) { showErr("A verificação anti-robô não carregou. Recarregue a página e tente de novo."); return; }
-        if (!turnstileToken) { showErr("Confirme a verificação anti-robô antes de entrar."); return; }
+        if (!turnstileToken) { showErr("Aguarde a verificação anti-robô terminar."); sincronizarBotao(); return; }
       }
       const btn = $("#loginBtn");
       btn.disabled = true; btn.textContent = "Verificando…"; btn.classList.add("loading");
@@ -414,6 +433,7 @@ const App = (() => {
         if (captchaAtivo && window.turnstile && turnstileWidget !== null) {
           turnstileToken = "";
           try { window.turnstile.reset(turnstileWidget); } catch (e2) { /* nada */ }
+          sincronizarBotao();
         }
       }
     });

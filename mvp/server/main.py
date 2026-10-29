@@ -174,7 +174,7 @@ def _validar_turnstile(request: Request, token: str) -> None:
     import requests
 
     if not token:
-        raise HTTPException(status_code=400, detail="Falha na verificação anti-bot. Recarregue a página.")
+        raise HTTPException(status_code=400, detail="Verificação anti-robô obrigatória. Recarregue a página.")
     try:
         r = requests.post(
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -226,7 +226,10 @@ def logout(request: Request, user: dict = Depends(auth.get_usuario)):
 @app.get("/api/publico")
 def config_publica():
     """Config que o front precisa antes do login (chave pública do anti-bot)."""
-    return {"turnstile_sitekey": TURNSTILE_SITE_KEY}
+    # Só anuncia a sitekey quando a validação está realmente ativa: o front monta o
+    # widget e trava o botão a partir disso, e o endpoint de login exige o token.
+    ativo = bool(TURNSTILE_SECRET and TURNSTILE_SITE_KEY)
+    return {"turnstile_sitekey": TURNSTILE_SITE_KEY if ativo else ""}
 
 
 @app.get("/api/auth/me")

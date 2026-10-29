@@ -600,7 +600,7 @@ header{
   border:2px solid var(--ink);background:var(--stamp);color:var(--paper);
   font-size:0;letter-spacing:0;transform:rotate(-4deg);box-shadow:4px 4px 0 var(--accent);
 }
-.stamp::before{content:"B.";position:static;top:auto;font-family:var(--serif);font-size:27px;font-weight:700;line-height:1}
+.stamp::before{content:"J.";position:static;top:auto;font-family:var(--serif);font-size:27px;font-weight:700;line-height:1}
 .stamp::after{inset:auto 5px 5px auto;width:8px;height:8px;background:var(--accent);border:0;border-radius:0}
 .brand h1{font-family:var(--serif);font-size:25px;font-weight:700;letter-spacing:-.04em}
 .brand .sub{font-family:var(--body);font-size:12px;font-weight:700;letter-spacing:.08em;margin-top:4px}
