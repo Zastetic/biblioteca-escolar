@@ -502,23 +502,36 @@ normalmente já sabe o que procura, então grade + filtro continuam sendo o cami
 - **Sem nota inventada**: a prateleira diz que a nota é do catálogo externo. Avaliação dos próprios alunos
   (estrelas + comentário) exigiria tabela nova e ficou fora deste escopo.
 
-## 21. Turma/série do aluno: a SED não fornece (28/10/2026)
+## 21. Turma/série do aluno — agora automática (28/10/2026)
 
-Investigação feita a pedido do Okai para saber se a série/turma podia ser puxada automaticamente de
-`sed.educacao.sp.gov.br/GradeAulaAluno/Index` (GET que devolve HTML, não JSON). Resultado: **não dá**, com
-três provas:
+Primeiro tentei o caminho do HTML (`sed.educacao.sp.gov.br/GradeAulaAluno/Index`) e ele **não serve**:
+o JWT do `LoginCompletoToken` não é sessão do site (a página devolve 200 com a home de login), o
+`POST /Logon/Logon/` com usuário/senha voltou 200 com 0 bytes e sem o cookie `SED=`, e o `DadosUsuario`
+não tem campo de série.
 
-1. **Token da API não abre a área do aluno.** `LoginCompletoToken` devolve um JWT do BFF
-   (`sedintegracoes`, 988 chars) que vale para as APIs, não para o site. `GET /GradeAulaAluno/Index` com
-   `Authorization: Bearer <jwt>` → **HTTP 200 com 45 KB da home de login**, redirecionando para
-   `https://sed.educacao.sp.gov.br/` — idêntico a pedir sem nada.
-2. **O login por formulário não existe mais.** `GET /Logon/Logon/` devolve 45 KB **sem campo `usuario`**
-   (só o formulário "Definir senha"); `POST` com `usuario/senha/tipo=A/__RequestVerificationToken` volta
-   **200 com 0 bytes** e não cria o cookie `SED=...`. O portal migrou para **SSO gov.br** (barra
-   "Cidadão SP /governosp"), como o risco registrado no item 2.
-3. **O payload da API não traz turma.** `DadosUsuario` só tem `CD_USUARIO`, `LOGIN`, `NAME`, `NR_CPF`,
-   `EMAIL`, `EMAIL_GOOGLE`, `EMAIL_MS`, `NM_NICK`, `PERFIS`; o array `A` veio vazio.
+O caminho que **funciona** é a API de declaração de matrícula do mesmo BFF:
 
-Conclusão: dependeria de sessão gov.br do aluno, que não existe do lado do servidor. **Escopo encerrado
-sem implementação** — o Okai decidiu não criar alternativa manual (preenchimento/importação de turma);
-`alunos.turma` continua vazio para quem entra pela SED, e as telas já tratam isso com "—".
+```
+GET https://sedintegracoes.educacao.sp.gov.br/saladofuturobffapi/ncaapi/api/DeclaracaoMatriculaSF/Matriculas
+     ?anoLetivo=2026&codigoAluno=<codigo>
+     Ocp-Apim-Subscription-Key: <a mesma chave do login>
+```
+
+Devolve `escola`, `tipoDeEnsino`, `turma` (ex.: `6082 - DESENVOLVIMENTO DE SISTEMAS - 3ª SERIE B MANHA
+ANUAL`) e `situacaoAluno`.
+
+Três detalhes que custaram a descoberta:
+
+1. **A sessão vem do próprio login.** O `LoginCompletoToken` responde com `Set-Cookie: sf_sid=<uuid>;
+   domain=.educacao...` (+ `ApplicationGatewayAffinity*`). Por isso `sed_client` passou a usar
+   `requests.Session()`: sem o cookie `sf_sid` a matrícula responde **401**.
+2. **`codigoAluno` não é o `CD_USUARIO`.** Com o `CD_USUARIO` inteiro a resposta é 200 com
+   `Matriculas: []`; o código certo é o **CD_USUARIO sem o último dígito** (confirmado em 3 contas).
+3. **Precisa de User-Agent de navegador.** Com o UA do `python-requests` o gateway responde **403** com
+   ~200 KB de HTML; com UA de Chrome, 200 e o JSON. (A resposta também vem com BOM UTF-8, então
+   `resp.json()` estoura — daí o `_json_bom()`.)
+
+Implementação em `sed_client.py`: `_turma_da_matricula()` roda depois do login, tenta o ano corrente e o
+anterior, prefere a matrícula com `situacaoAluno = Ativo` e formata para `3ª série B · Manhã`
+(`_formatar_turma`). Falha em silêncio: sem turma o login continua funcionando e a UI mostra "—".
+O espelho (`alunos.turma`) só é sobrescrito quando vem algo.

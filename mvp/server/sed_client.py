@@ -11,6 +11,7 @@ Produção: SED_ENABLED=true → valida na API real da SED:
 Quando o login vier do anti-bot Cloudflare (Turnstile), o token é validado
 em main.py ANTES desta chamada.
 """
+import json
 import logging
 import os
 import re
@@ -24,7 +25,23 @@ SED_ENABLED = os.environ.get("SED_ENABLED", "false").lower() == "true"
 # Chave de assinatura da SED — NUNCA versionada. Vem do ambiente (mvp/.env, ver .env.example).
 SED_SUBSCRIPTION_KEY = os.environ.get("SED_SUBSCRIPTION_KEY", "")
 SED_URL = "https://sedintegracoes.educacao.sp.gov.br/saladofuturobffapi/credenciais/api/LoginCompletoToken"
+# Declaração de matrícula (dá escola, ensino, turma/série e turno). Exige a sessão `sf_sid`
+# que o LoginCompletoToken devolve em Set-Cookie — por isso o login passou a usar requests.Session.
+UA_SED = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36")
+MATRICULA_URL = ("https://sedintegracoes.educacao.sp.gov.br/saladofuturobffapi/ncaapi"
+                 "/api/DeclaracaoMatriculaSF/Matriculas")
 SED_TIMEOUT = float(os.environ.get("SED_TIMEOUT", "8"))
+
+
+def _json_bom(resp) -> dict:
+    """JSON tolerante ao BOM: a resposta da NCAAPI vem com UTF-8 BOM e `resp.json()` estoura."""
+    texto = resp.content.decode("utf-8-sig", errors="replace")
+    try:
+        dados = json.loads(texto)
+    except ValueError:
+        return {}
+    return dados if isinstance(dados, dict) else {}
 
 
 def corpo_json(resp) -> dict:
@@ -128,15 +145,17 @@ def _validar_sed(ra: str, senha: str) -> dict:
 
     import requests  # import local: dependência opcional no modo mock
 
+    sessao = requests.Session()
+    sessao.headers.update({"User-Agent": UA_SED})
     try:
-        resp = requests.post(
+        resp = sessao.post(
             SED_URL,
             json={"user": normalize_ra(ra), "senha": senha},
             headers={
                 "Accept": "application/json, text/plain, */*",
                 "Content-Type": "application/json",
                 "Ocp-Apim-Subscription-Key": SED_SUBSCRIPTION_KEY,
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+                "User-Agent": UA_SED,
             },
             timeout=SED_TIMEOUT,
         )
@@ -155,6 +174,7 @@ def _validar_sed(ra: str, senha: str) -> dict:
         raise ValueError("Resposta inesperada da Secretaria Digital. Tente novamente.")
 
     du = dados.get("DadosUsuario") or {}
+    turma = _turma_da_matricula(sessao, str(du.get("CD_USUARIO") or ""))
     nome = normalizar_nome(du.get("NAME") or f"Aluno {ra}")
     cpf = str(du.get("NR_CPF") or "")
     email = du.get("EMAIL") or ""
@@ -167,13 +187,74 @@ def _validar_sed(ra: str, senha: str) -> dict:
     try:
         conn.execute(
             """INSERT INTO alunos (ra, nome, turma, cpf, email, nascimento)
-               VALUES (?, ?, '', ?, ?, ?)
+               VALUES (?, ?, ?, ?, ?, ?)
                ON CONFLICT(ra) DO UPDATE SET
                  nome = excluded.nome, cpf = excluded.cpf,
-                 email = excluded.email, nascimento = excluded.nascimento""",
-            (chave, nome, cpf, email, nascimento),
+                 email = excluded.email, nascimento = excluded.nascimento,
+                 turma = CASE WHEN excluded.turma <> '' THEN excluded.turma ELSE alunos.turma END""",
+            (chave, nome, turma, cpf, email, nascimento),
         )
         conn.commit()
     finally:
         conn.close()
-    return {"ra": chave, "nome": nome, "turma": ""}
+    return {"ra": chave, "nome": nome, "turma": turma}
+
+def _formatar_turma(bruta: str) -> str:
+    """'6082 - DESENVOLVIMENTO DE SISTEMAS - 3ª SERIE B MANHA ANUAL' -> '3ª série B · Manhã'."""
+    texto = " ".join(str(bruta or "").upper().split())
+    if not texto:
+        return ""
+    import re as _re
+
+    serie = ""
+    m = _re.search(r"\b(\d+)\s*[ªA]?\s*S[EÉ]RIE\s*([A-Z])?", texto)
+    if m:
+        serie = f"{m.group(1)}ª série" + (f" {m.group(2)}" if m.group(2) else "")
+    else:
+        m = _re.search(r"\b(\d+)\s*[ºO]\s*ANO\s*([A-Z])?", texto)
+        if m:
+            serie = f"{m.group(1)}º ano" + (f" {m.group(2)}" if m.group(2) else "")
+    turno = ""
+    for chave, rotulo in (("MANHA", "Manhã"), ("TARDE", "Tarde"), ("NOITE", "Noite"),
+                          ("INTEGRAL", "Integral")):
+        if chave in texto:
+            turno = rotulo
+            break
+    partes = [p for p in (serie, turno) if p]
+    return " · ".join(partes) if partes else " ".join(str(bruta or "").split())[:40]
+
+
+def _turma_da_matricula(sessao, cd_usuario: str) -> str:
+    """Busca a turma/série na declaração de matrícula usando a sessão do login.
+
+    Falha em silêncio (retorna "") — turma é enfeite, não pode derrubar o login.
+    `codigoAluno` NÃO é o CD_USUARIO: medido em 3 contas, é o CD_USUARIO sem o último dígito.
+    """
+    if not cd_usuario or not SED_SUBSCRIPTION_KEY:
+        return ""
+    codigo = cd_usuario[:-1]
+    cabecalhos = {
+        "Accept": "application/json, text/plain, */*",
+        "Ocp-Apim-Subscription-Key": SED_SUBSCRIPTION_KEY,
+        "Origin": "https://saladofuturo.educacao.sp.gov.br",
+        "Referer": "https://saladofuturo.educacao.sp.gov.br/",
+        "X-Product-Name": "SalaDoFuturo",
+        # sem UA de navegador o gateway da NCAAPI responde 403 com uma pagina HTML de erro
+        "User-Agent": UA_SED,
+    }
+    ano = time.strftime("%Y")
+    for ano_letivo in (ano, str(int(ano) - 1)):
+        try:
+            r = sessao.get(MATRICULA_URL, params={"anoLetivo": ano_letivo, "codigoAluno": codigo},
+                           headers=cabecalhos, timeout=SED_TIMEOUT)
+            if r.status_code != 200:
+                continue
+            matriculas = (_json_bom(r).get("Matriculas") or [])
+            if not matriculas:
+                continue
+            ativa = next((m for m in matriculas if str(m.get("situacaoAluno", "")).lower() == "ativo"),
+                         matriculas[0])
+            return _formatar_turma(ativa.get("turma", ""))
+        except Exception:
+            continue
+    return ""
