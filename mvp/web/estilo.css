@@ -27,6 +27,7 @@
   --matrix-shadow-blue:0 0 10px rgba(34,150,255,.24),0 0 15px rgba(34,150,255,.16);
   --matrix-shadow-pink:0 0 10px rgba(255,105,180,.24),0 0 15px rgba(255,105,180,.15);
   --matrix-shadow-flash:0 0 10px rgba(255,255,255,.58),0 0 15px rgba(58,150,255,.2);
+  color-scheme: light;
 }
 :root[data-theme="dark"]{
   --paper:#151a29;
@@ -51,6 +52,7 @@
   --matrix-shadow-blue:0 0 10px rgba(100,200,255,1),0 0 15px rgba(100,200,255,1);
   --matrix-shadow-pink:0 0 10px rgba(255,105,180,1),0 0 15px rgba(255,105,180,1);
   --matrix-shadow-flash:0 0 10px #fff,0 0 15px #fff,0 0 20px #fff;
+  color-scheme: dark;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -915,3 +917,18 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 :root[data-theme="dark"] .serie-tag.serie-9{color:#c8a7ff;background:rgba(160,110,255,.18)}
 :root[data-theme="dark"] .serie-tag:not(.serie-1):not(.serie-2):not(.serie-3):not(.serie-9){color:var(--ink-soft);background:rgba(255,255,255,.07)}
 .list-item .info .a .serie-tag{margin-right:6px}
+
+/* ===== scrollbars no estilo da página ===== */
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{
+  background:var(--line);border:3px solid transparent;border-radius:10px;
+  background-clip:content-box;
+}
+::-webkit-scrollbar-thumb:hover{background:var(--stamp);border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-corner{background:transparent}
+
+/* as prateleiras do catálogo não mostram barra: têm setas no desktop e swipe no celular */
+.trilho{scrollbar-width:none;-ms-overflow-style:none}
+.trilho::-webkit-scrollbar{display:none;width:0;height:0}
