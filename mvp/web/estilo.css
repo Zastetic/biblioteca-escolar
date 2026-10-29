@@ -801,3 +801,9 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 :root[data-theme="dark"] .field input::placeholder,
 :root[data-theme="dark"] .busca-bar input::placeholder{color:var(--ink-soft);opacity:1}
 :root[data-theme="dark"] .field .hint{color:var(--ink-soft)}
+
+/* ===== anti-bot (Cloudflare Turnstile) no login ===== */
+.turnstile-slot{display:flex;justify-content:center;margin:2px 0 14px;min-height:65px}
+.turnstile-slot[hidden]{display:none}
+.anti-bot-hint{font-size:11.5px;color:var(--ink-soft);text-align:center;margin-top:10px;line-height:1.45}
+.anti-bot-hint[hidden]{display:none}

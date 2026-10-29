@@ -262,7 +262,9 @@ const App = (() => {
                 <label for="loginSenha">Senha</label>
                 <input id="loginSenha" name="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" maxlength="128">
               </div>
+              <div class="turnstile-slot" id="cfTurnstile" hidden></div>
               <button type="submit" class="btn primary" style="width:100%;padding:12px 0" id="loginBtn">Entrar na biblioteca</button>
+              <div class="anti-bot-hint" id="cfHint" hidden>Verificação anti-robô da Cloudflare · evita bloqueio por tentativas.</div>
             </form>
             <div class="login-foot">
               <span>Autenticação via</span>
@@ -324,16 +326,84 @@ const App = (() => {
     }
     $("#loginErrX").addEventListener("click", () => box.classList.remove("show"));
 
+    // ---- anti-bot Cloudflare Turnstile (só ativa quando o servidor informa a sitekey) ----
+    let turnstileToken = "";
+    let turnstileWidget = null;
+    let captchaSitekey = "";
+    let captchaAtivo = false;
+    let captchaFalhou = false;
+
+    async function prepararCaptcha() {
+      let sitekey = "";
+      try {
+        const cfg = await API.get("/api/publico");
+        sitekey = (cfg && cfg.turnstile_sitekey) || "";
+      } catch (e) {
+        sitekey = "";
+      }
+      if (!sitekey) return; // servidor sem anti-bot: login segue como antes
+      captchaAtivo = true;
+      captchaSitekey = sitekey;
+      const alvo = $("#cfTurnstile");
+      const dica = $("#cfHint");
+      if (alvo) alvo.hidden = false;
+      if (dica) dica.hidden = false;
+      const carregar = () => new Promise((ok, falha) => {
+        if (window.turnstile) return ok();
+        const s = document.createElement("script");
+        s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        s.async = true;
+        s.defer = true;
+        s.onload = ok;
+        s.onerror = falha;
+        document.head.appendChild(s);
+      });
+      try {
+        await carregar();
+        turnstileWidget = window.turnstile.render("#cfTurnstile", {
+          sitekey,
+          language: "pt-BR",
+          theme: document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light",
+          callback: (t) => { turnstileToken = t; },
+          "expired-callback": () => { turnstileToken = ""; },
+          "error-callback": () => { turnstileToken = ""; },
+        });
+      } catch (e) {
+        captchaFalhou = true;
+        showErr("Não foi possível carregar a verificação anti-robô. Recarregue a página.");
+      }
+    }
+    prepararCaptcha();
+
+    $(".theme-toggle", document)?.addEventListener("click", () => {
+      // o widget do Turnstile não troca de tema sozinho: recria no tema atual
+      if (!captchaAtivo || captchaFalhou || !window.turnstile || turnstileWidget === null) return;
+      const t = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      try { window.turnstile.remove(turnstileWidget); } catch (e) { /* widget já removido */ }
+      turnstileToken = "";
+      turnstileWidget = window.turnstile.render("#cfTurnstile", {
+        sitekey: captchaSitekey,
+        language: "pt-BR",
+        theme: t,
+        callback: (tok) => { turnstileToken = tok; },
+        "expired-callback": () => { turnstileToken = ""; },
+      });
+    });
+
     $("#loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const ra = $("#loginRa").value.trim();
       const senha = $("#loginSenha").value;
       box.classList.remove("show");
       if (!ra || !senha) { showErr("Preencha o RA e a senha para continuar."); return; }
+      if (captchaAtivo) {
+        if (captchaFalhou) { showErr("A verificação anti-robô não carregou. Recarregue a página e tente de novo."); return; }
+        if (!turnstileToken) { showErr("Confirme a verificação anti-robô antes de entrar."); return; }
+      }
       const btn = $("#loginBtn");
       btn.disabled = true; btn.textContent = "Verificando…"; btn.classList.add("loading");
       try {
-        const r = await API.post("/api/auth/login", { ra, senha });
+        const r = await API.post("/api/auth/login", { ra, senha, cf_turnstile_token: turnstileToken });
         API.salvarSessao(r.token, r.usuario);
         renderHeader();
         location.hash = r.usuario.is_admin ? "#/admin/dashboard" : "#/catalogo";
@@ -341,6 +411,10 @@ const App = (() => {
       } catch (err) {
         showErr(err.message);
         btn.disabled = false; btn.textContent = "Entrar na biblioteca"; btn.classList.remove("loading");
+        if (captchaAtivo && window.turnstile && turnstileWidget !== null) {
+          turnstileToken = "";
+          try { window.turnstile.reset(turnstileWidget); } catch (e2) { /* nada */ }
+        }
       }
     });
   }

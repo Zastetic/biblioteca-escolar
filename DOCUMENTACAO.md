@@ -429,3 +429,30 @@ Objetivo: o site precisava parecer uma biblioteca em uso na frente da banca, nã
 - Turma do aluno continua vazia (não vem do `LoginCompletoToken`).
 - Login de demonstração depende da SED real (`SED_ENABLED=true`); em modo mock o `admin123` do seed entra
   como ADMIN e por isso nunca deve ser usado no hostname público.
+
+## 18. Anti-bot (Cloudflare Turnstile) no login — 28/10/2026
+
+Motivo: o bloqueio local de tentativas (`auth.py`) engasgava o próprio dono. Atrás do túnel o
+`request.client.host` é sempre `127.0.0.1`, então a chave do rate limit era "RA + IP da Cloudflare" e
+qualquer erro de outra pessoa travava a conta para todo mundo. Com captcha, o bloqueio deixa de ser a
+única defesa.
+
+- **Backend**: `_validar_turnstile` já existia e ficava inerte sem `TURNSTILE_SECRET_KEY`. Agora valida
+  com `remoteip` do visitante real (`CF-Connecting-IP`). Ativo só quando a secret existe; sem ela o login
+  funciona como antes.
+- **Chave pública**: `GET /api/publico` devolve `turnstile_sitekey` (sem autenticação) — o front só monta o
+  widget quando recebe uma chave, então ligar/desligar é só mexer no `.env` e reiniciar.
+- **Rate limit**: chave por `CF-Connecting-IP` (não mais o IP do túnel) e defaults `8` falhas / `10 min`
+  (`LOGIN_MAX_TENTATIVAS`, `LOGIN_JANELA_SEG`).
+- **Front**: widget explícito no cartão de login (`#cfTurnstile`), token enviado como `cf_turnstile_token`,
+  reset em erro de login e re-render ao trocar de tema.
+- **CSP**: `challenges.cloudflare.com` liberado em `script-src`, `connect-src` e `frame-src` — sem os três
+  o widget não carrega (os iframes internos da Cloudflare ainda usam subdomínios próprios, bloqueados pelo
+  CSP *deles*, sem quebrar o login).
+- **Chaves**: as mesmas do projeto autoava (`~/automateava/Server/.env.local`). O widget aceitou
+  `library.autoava.us` por ser subdomínio do domínio já configurado — não foi preciso criar widget novo.
+  Ao editar o `.env` por script, cuidado com o BOM do `.env.local`: copiar o valor errado deixou a sitekey
+  vazia e o widget não montava (sintoma: `/api/publico` devolvendo `""`).
+
+Prova medida no domínio público: token real do widget (730 chars) → login com senha errada devolveu
+**401 da SED** (captcha aceito); sem token → **400 anti-bot**.

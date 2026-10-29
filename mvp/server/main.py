@@ -32,6 +32,7 @@ import sed_client
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 MAX_BODY = 10 * 1024 * 1024  # 10MB (uploads de capa por IA)
 TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET_KEY", "")
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
 
 app = FastAPI(title="Biblioteca Escolar API", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -55,11 +56,12 @@ async def security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self'; "
+        "script-src 'self' https://challenges.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src https://fonts.gstatic.com; "
         "img-src 'self' data: blob: https://books.google.com https://covers.openlibrary.org https://upload.wikimedia.org; "
-        "connect-src 'self' https://www.googleapis.com; "
+        "connect-src 'self' https://www.googleapis.com https://challenges.cloudflare.com; "
+        "frame-src https://challenges.cloudflare.com; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; form-action 'self'"
     )
@@ -157,6 +159,14 @@ def _emprestimo_dict(row, prazo_preparacao_dias: int | None = None) -> dict:
     return d
 
 
+def _ip_cliente(request: Request) -> str:
+    """IP real do visitante: atrás do túnel da Cloudflare o socket é 127.0.0.1."""
+    encaminhado = (request.headers.get("cf-connecting-ip") or "").strip()
+    if encaminhado:
+        return encaminhado
+    return request.client.host if request.client else ""
+
+
 def _validar_turnstile(request: Request, token: str) -> None:
     """Hook anti-bot Cloudflare. Só exige validação se a secret estiver configurada."""
     if not TURNSTILE_SECRET:
@@ -169,7 +179,7 @@ def _validar_turnstile(request: Request, token: str) -> None:
         r = requests.post(
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
             data={"secret": TURNSTILE_SECRET, "response": token,
-                  "remoteip": request.client.host if request.client else ""},
+                  "remoteip": _ip_cliente(request)},
             timeout=5,
         )
         ok = r.json().get("success") is True
@@ -211,6 +221,12 @@ def login(body: LoginBody, request: Request):
 def logout(request: Request, user: dict = Depends(auth.get_usuario)):
     auth.revogar_token(db.conectar(), request.state.token)
     return {"ok": True}
+
+
+@app.get("/api/publico")
+def config_publica():
+    """Config que o front precisa antes do login (chave pública do anti-bot)."""
+    return {"turnstile_sitekey": TURNSTILE_SITE_KEY}
 
 
 @app.get("/api/auth/me")

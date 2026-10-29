@@ -14,17 +14,29 @@ from fastapi import Depends, Header, HTTPException, Request, status
 import db
 
 TTL_MINUTOS = int(os.environ.get("TOKEN_TTL_MIN", "1440"))  # 24h
-LOGIN_MAX_TENTATIVAS = int(os.environ.get("LOGIN_MAX_TENTATIVAS", "5"))
-LOGIN_JANELA_SEG = int(os.environ.get("LOGIN_JANELA_SEG", "900"))  # 15 min de bloqueio
+LOGIN_MAX_TENTATIVAS = int(os.environ.get("LOGIN_MAX_TENTATIVAS", "8"))
+LOGIN_JANELA_SEG = int(os.environ.get("LOGIN_JANELA_SEG", "600"))  # 10 min de bloqueio
 
 # Rate limiting em memória: chave -> {"tentativas": [...timestamps...], "bloqueado_ate": ts}
 _tentativas: dict = {}
 
 
+def _ip_cliente(request: Request) -> str:
+    """IP real do visitante.
+
+    Atrás do túnel da Cloudflare o socket é sempre 127.0.0.1: usar `request.client.host`
+    fazia o bloqueio valer por RA no mundo inteiro (qualquer erro de outra pessoa travava
+    o dono). `CF-Connecting-IP` é preenchido pela Cloudflare e é o IP do visitante.
+    """
+    encaminhado = (request.headers.get("cf-connecting-ip") or "").strip()
+    if encaminhado:
+        return encaminhado
+    return request.client.host if request.client else "?"
+
+
 def _chave_login(ra: str, request: Request) -> str:
     # Bloqueio por RA + IP: impede ataque distribuído na mesma conta e brute force geral
-    ip = request.client.host if request.client else "?"
-    return f"{ra}|{ip}"
+    return f"{ra}|{_ip_cliente(request)}"
 
 
 def checar_rate_limit(ra: str, request: Request) -> None:
