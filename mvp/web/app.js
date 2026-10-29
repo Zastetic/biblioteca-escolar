@@ -104,6 +104,22 @@ const App = (() => {
     if (isNaN(d)) return s;
     return d.toLocaleDateString("pt-BR");
   }
+  // ---------- série do aluno como "etiqueta" (3B, 1C...) ----------
+  function serieCurta(turma) {
+    const t = String(turma || "");
+    const m = t.match(/(\d+)\s*[ºªo]?\s*(?:s[ée]rie|ano)?\s*([A-Z])?/i);
+    if (!m) return "";
+    const numero = m[1];
+    const letra = (m[2] || "").toUpperCase();
+    return letra ? `${numero}${letra}` : numero;
+  }
+  function serieBadge(turma, extra = "") {
+    const curta = serieCurta(turma);
+    if (!curta) return "";
+    const numero = curta.replace(/\D/g, "");
+    return `<span class="serie-tag serie-${numero} ${extra}" title="${esc(turma)}">${esc(curta)}</span>`;
+  }
+
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
 
@@ -125,7 +141,7 @@ const App = (() => {
       right.innerHTML = `
         <div class="header-user">
           <span class="pill">RA <b>${esc(u.ra)}</b> · ${papel}</span>
-          ${u.turma ? `<span class="pill turma-pill" title="Turma informada pela Secretaria Digital">${esc(u.turma)}</span>` : ""}
+          ${u.turma ? serieBadge(u.turma, "serie-tag-lg") : ""}
           ${u.is_admin ? `<span class="pill solic" id="pillSolic" hidden title="Ver solicitações" style="cursor:pointer"></span>` : ""}
           <button class="sair" id="btnSair">Sair</button>
         </div>
@@ -793,7 +809,7 @@ const App = (() => {
           <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
           <div class="info">
             <div class="t">${esc(x.titulo)}</div>
-            <div class="a">${esc(x.aluno_nome)}${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}</div>
+            <div class="a">${serieBadge(x.aluno_turma)} ${esc(x.aluno_nome)}</div>
             <div class="d">${acoes.desc}</div>
           </div>
           ${badge(x.status)}
@@ -848,7 +864,7 @@ const App = (() => {
               <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
               <div class="info">
                 <div class="t">${esc(x.titulo)}</div>
-                <div class="a">${esc(x.aluno_nome)}${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}</div>
+                <div class="a">${serieBadge(x.aluno_turma)} ${esc(x.aluno_nome)}</div>
                 <div class="d"><b>${x.dias_atraso} dia(s)</b> de atraso</div>
               </div>
               ${badge("atrasado")}
@@ -870,7 +886,7 @@ const App = (() => {
             <thead><tr><th>Aluno</th><th>Livro</th><th>Pedido</th><th>Saída</th><th>Prevista</th><th>Status</th></tr></thead>
             <tbody>
               ${d.recentes.map(x => `
-                <tr><td>${esc(x.aluno_nome)}</td><td class="t-title">${esc(x.titulo)}</td>
+                <tr><td>${serieBadge(x.aluno_turma)} ${esc(x.aluno_nome)}</td><td class="t-title">${esc(x.titulo)}</td>
                 <td>${fmtData(x.data_solicitacao)}</td><td>${fmtData(x.data_emprestimo)}</td><td>${fmtData(x.data_prevista)}</td><td>${badge(x.status)}</td></tr>`).join("")}
             </tbody>
           </table>
@@ -1380,7 +1396,7 @@ const App = (() => {
       <div class="card">
         <h3>Empréstimos ativos</h3>
         <div class="table-wrap"><table class="table">
-          <thead><tr><th>Aluno</th><th>Turma</th><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th><th style="text-align:right">Ação</th></tr></thead>
+          <thead><tr><th>Aluno</th><th>Livro</th><th>Saída</th><th>Prevista</th><th>Status</th><th style="text-align:right">Ação</th></tr></thead>
           <tbody id="ativosTbody"></tbody>
         </table></div>
       </div>
@@ -1398,7 +1414,7 @@ const App = (() => {
           <div style="pointer-events:none;cursor:default;flex-shrink:0">${coverHtml(x, "sm")}</div>
           <div class="info">
             <div class="t">${esc(x.titulo)}</div>
-            <div class="a">${esc(x.aluno_nome)}${x.aluno_turma ? ` · ${esc(x.aluno_turma)}` : ""}</div>
+            <div class="a">${serieBadge(x.aluno_turma)} ${esc(x.aluno_nome)}</div>
             <div class="d">${acoes.desc}</div>
           </div>
           ${badge(x.status)}
@@ -1429,13 +1445,13 @@ const App = (() => {
       })).join("") : `<div class="empty" style="padding:16px">Nenhum livro pronto aguardando retirada.</div>`;
 
       $("#ativosTbody" ).innerHTML = ativos.length ? ativos.map(x => `
-        <tr><td>${esc(x.aluno_nome)}</td><td class="t-title">${esc(x.titulo)}</td>
+        <tr><td>${serieBadge(x.aluno_turma)} ${esc(x.aluno_nome)}</td><td class="t-title">${esc(x.titulo)}</td>
         <td>${fmtData(x.data_emprestimo)}</td><td>${fmtData(x.data_prevista)}</td>
         <td>${badge(x.status)}</td>
         <td style="text-align:right"><button class="btn sm primary" data-dev="${x.id}">Devolver</button></td></tr>`).join("")
         : `<tr><td colspan="6" class="empty">Nenhum empréstimo ativo.</td></tr>`;
       $("#histTbody" ).innerHTML = hist.length ? hist.map(x => `
-        <tr><td>${esc(x.aluno_nome)}</td><td class="t-title">${esc(x.titulo)}</td>
+        <tr><td>${serieBadge(x.aluno_turma)} ${esc(x.aluno_nome)}</td><td class="t-title">${esc(x.titulo)}</td>
         <td>${fmtData(x.data_emprestimo)}</td><td>${fmtData(x.data_devolucao)}</td><td>${badge(x.status)}</td></tr>`).join("")
         : `<tr><td colspan="5" class="empty">Nenhuma devolução ainda.</td></tr>`;
 
@@ -1559,7 +1575,7 @@ const App = (() => {
           <div style="margin-top:22px;border:1px solid var(--rule);padding:20px 24px">
             <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
               <div>
-                <div style="font-family:var(--serif);font-style:italic;font-size:19px">${esc(a.nome)}</div>
+                <div style="font-family:var(--serif);font-style:italic;font-size:19px">${serieBadge(a.turma, "serie-tag-lg")} ${esc(a.nome)}</div>
                 <div style="font-size:12.5px;color:var(--ink-soft);margin-top:3px">RA <b>${esc(a.ra)}</b> · ${esc(a.turma || "—")}</div>
               </div>
               <div style="text-align:right;font-size:12.5px;line-height:1.8">

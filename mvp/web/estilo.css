@@ -895,3 +895,23 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 .header-user .pill.turma-pill{border-color:var(--stamp);color:var(--stamp);background:transparent}
 :root[data-theme="dark"] .header-user .pill.turma-pill{border-color:var(--acid);color:var(--acid)}
 @media(max-width:760px){.header-user .pill.turma-pill{font-size:10px;padding:3px 8px}}
+
+/* ===== etiqueta da série do aluno (3B, 1C…) ===== */
+.serie-tag{
+  display:inline-block;font-family:var(--body);font-weight:800;font-size:10.5px;
+  letter-spacing:.06em;line-height:1.6;padding:1px 7px;border-radius:5px;
+  border:1.5px solid currentColor;vertical-align:middle;
+}
+.serie-tag-lg{font-size:12px;padding:2px 9px;border-radius:6px;letter-spacing:.08em}
+/* cor por ano/série: 1 coral, 2 azul, 3 limão, 9 roxo, demais neutro */
+.serie-tag.serie-1{color:#c8402b;background:rgba(241,90,67,.13)}
+.serie-tag.serie-2{color:#2d3ce8;background:rgba(45,60,232,.11)}
+.serie-tag.serie-3{color:#6d7f10;background:rgba(214,238,88,.42)}
+.serie-tag.serie-9{color:#7c3aed;background:rgba(124,58,237,.13)}
+.serie-tag:not(.serie-1):not(.serie-2):not(.serie-3):not(.serie-9){color:var(--ink-soft);background:rgba(0,0,0,.05)}
+:root[data-theme="dark"] .serie-tag.serie-1{color:#ff9d8c;background:rgba(255,130,105,.16)}
+:root[data-theme="dark"] .serie-tag.serie-2{color:#a9b4ff;background:rgba(120,140,255,.16)}
+:root[data-theme="dark"] .serie-tag.serie-3{color:var(--acid);background:rgba(201,237,88,.14)}
+:root[data-theme="dark"] .serie-tag.serie-9{color:#c8a7ff;background:rgba(160,110,255,.18)}
+:root[data-theme="dark"] .serie-tag:not(.serie-1):not(.serie-2):not(.serie-3):not(.serie-9){color:var(--ink-soft);background:rgba(255,255,255,.07)}
+.list-item .info .a .serie-tag{margin-right:6px}

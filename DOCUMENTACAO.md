@@ -545,3 +545,14 @@ O espelho (`alunos.turma`) só é sobrescrito quando vem algo.
   painel (solicitações, prontos, atrasos) e no card "Separado em … para …", além da consulta de aluno,
   do CSV e — com a permissão de admin — do mesmo pill no cabeçalho.
 - `_emprestimo_dict` passou a expor `aluno_turma`; as 7 consultas que o alimentam trazem `a.turma`.
+
+### Série como etiqueta (3B, 1C…) — 28/10/2026
+
+Toda vez que o nome do aluno aparece, vem a etiqueta da série em negrito, no formato `3B`/`1C`:
+`serieCurta("3ª série B · Manhã")` → `3B` (aceita "3º ano A", "9º ano Z" e a turma crua da SED).
+`serieBadge()` gera `<span class="serie-tag serie-N">` com cor por ano — 1 coral, 2 azul, 3 limão,
+9 roxo, demais neutro, com variantes para o tema escuro — e `title` com a turma completa.
+
+Onde aparece: cabeçalho do aluno/admin (versão maior), listas do painel (solicitações, prontos, atrasos),
+tabela de empréstimos ativos e histórico, e consulta de aluno. A coluna "Turma" separada saiu: a etiqueta
+dentro da célula do nome evita cabeçalho de 7 colunas com 6 células.
