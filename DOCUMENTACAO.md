@@ -461,3 +461,20 @@ qualquer erro de outra pessoa travava a conta para todo mundo. Com captcha, o bl
 
 Prova medida no domínio público: token real do widget (730 chars) → login com senha errada devolveu
 **401 da SED** (captcha aceito); sem token → **400 anti-bot**.
+
+## 19. Modo escuro com tratamento próprio — 28/10/2026
+
+O escuro era o claro invertido: toda borda `var(--ink)` virava um traço creme quase branco, e o
+resultado parecia wireframe. Agora a linha estrutural tem token próprio:
+
+- `--line` (light `#1d2234`, dark `rgba(221,219,199,.26)`) e `--line-soft` (dark `.13`) — 20 regras de
+  borda passaram a usá-los; no claro nada muda porque `--line` é a própria tinta.
+- Superfícies no escuro não têm contorno duro: ganham gradiente sutil + brilho interno no topo
+  (`inset 0 1px 0`) e sombra quente. O cartão de login mantém o deslocamento verde-limão da identidade,
+  em opacidade .22.
+- Fundo: três glows (azul no topo, limão à direita, coral embaixo) + textura de pontos em 4 px + gradiente
+  vertical, para o escuro ter profundidade em vez de ser um retângulo chapado.
+- Detalhes de identidade no escuro: aba ativa e links em verde-limão, `btn.primary` limão com texto escuro,
+  foco de input com halo limão, hover de tabela esverdeado.
+
+O modo claro foi conferido depois da troca (mesmos valores visuais de antes).
