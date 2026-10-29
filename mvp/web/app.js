@@ -1528,9 +1528,10 @@ const App = (() => {
       <div class="card">
         <h3>Consultar aluno</h3>
         <div class="form-row">
-          <div class="field"><label for="aRa">RA</label><input id="aRa" placeholder="123456789" maxlength="20"><div class="hint">O sufixo “sp” é adicionado automaticamente.</div></div>
+          <div class="field"><label for="aRa">RA</label><input id="aRa" placeholder="123456789" maxlength="20"></div>
           <button class="btn" id="aLocalizar">Localizar</button>
         </div>
+        <div class="hint" style="margin-top:8px">O sufixo “sp” é adicionado automaticamente.</div>
         <div id="aResultado"></div>
       </div>
       <div class="card">
