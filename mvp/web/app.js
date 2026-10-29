@@ -1517,15 +1517,6 @@ const App = (() => {
         <div id="aResultado"></div>
       </div>
       <div class="card">
-        <h3>Turmas em lote</h3>
-        <p class="hint" style="margin-bottom:12px">A SED não devolve turma no login. Cole uma linha por aluno
-          (<b>RA;turma</b>) — de planilha ou CSV. Quem ainda não fez login fica de fora da lista.</p>
-        <div class="field"><label for="turmasLote">RA;turma</label>
-          <textarea id="turmasLote" rows="5" placeholder="123456789;3º ano A · EM&#10;987654321;2º ano B · EM" maxlength="20000"></textarea></div>
-        <button class="btn primary" id="turmasImportar">Importar turmas</button>
-        <div id="turmasResultado" class="hint" style="margin-top:12px"></div>
-      </div>
-      <div class="card">
         <h3>Admins</h3>
         <p class="hint" style="margin-bottom:16px">Quem tem RA nesta lista entra direto na área administrativa.</p>
         <div class="form-row">
@@ -1557,35 +1548,6 @@ const App = (() => {
       }));
     }
 
-    out.addEventListener("click", async (e) => {
-      if (e.target.id !== "aSalvarTurma") return;
-      const ra = $("#aRa").value.trim();
-      const turma = $("#aTurma").value.trim();
-      const b = e.target;
-      b.disabled = true; b.textContent = "Salvando…";
-      try {
-        await API.put(`/api/admin/alunos/${encodeURIComponent(ra)}/turma`, { turma });
-        toast("Turma atualizada.", "ok");
-      } catch (err) { toast(err.message, "erro"); }
-      finally { b.disabled = false; b.textContent = "Salvar turma"; }
-    });
-
-    $("#turmasImportar").addEventListener("click", async () => {
-      const linhas = $("#turmasLote").value;
-      const alvo = $("#turmasResultado");
-      const b = $("#turmasImportar");
-      if (!linhas.trim()) { alvo.textContent = "Cole ao menos uma linha (RA;turma)."; return; }
-      b.disabled = true; b.textContent = "Importando…";
-      try {
-        const r = await API.post("/api/admin/alunos/importar-turmas", { linhas });
-        alvo.innerHTML = `<b>${r.atualizados}</b> turma(s) atualizada(s).`
-          + (r.nao_encontrados_total ? ` ${r.nao_encontrados_total} RA(s) sem login ainda: ${esc(r.nao_encontrados.join(", "))}` : "")
-          + (r.linhas_invalidas ? ` ${r.linhas_invalidas} linha(s) inválida(s).` : "");
-        toast(`${r.atualizados} turma(s) importada(s).`, "ok");
-      } catch (err) { alvo.textContent = err.message; }
-      finally { b.disabled = false; b.textContent = "Importar turmas"; }
-    });
-
     $("#aLocalizar").addEventListener("click", async () => {
       const ra = $("#aRa").value.trim();
       const outEl = $("#aResultado");
@@ -1597,12 +1559,7 @@ const App = (() => {
             <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
               <div>
                 <div style="font-family:var(--serif);font-style:italic;font-size:19px">${esc(a.nome)}</div>
-                <div style="font-size:12.5px;color:var(--ink-soft);margin-top:3px">RA <b>${esc(a.ra)}</b></div>
-                <div class="form-row" style="margin-top:12px;align-items:flex-end">
-                  <div class="field" style="margin:0"><label for="aTurma">Turma / série</label>
-                    <input id="aTurma" value="${esc(a.turma || "")}" placeholder="2º ano B · EM" maxlength="40"></div>
-                  <button class="btn sm primary" id="aSalvarTurma">Salvar turma</button>
-                </div>
+                <div style="font-size:12.5px;color:var(--ink-soft);margin-top:3px">RA <b>${esc(a.ra)}</b> · ${esc(a.turma || "—")}</div>
               </div>
               <div style="text-align:right;font-size:12.5px;line-height:1.8">
                 Empréstimos ativos: <b>${a.ativos}</b> · Atrasos: <b>${a.atrasos}</b>

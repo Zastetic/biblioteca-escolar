@@ -21,8 +21,6 @@ from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Respo
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-import re
-
 import requests
 from starlette.concurrency import run_in_threadpool
 
@@ -111,14 +109,6 @@ class DevolucaoBody(BaseModel):
 
 class AdminBody(BaseModel):
     ra: str = Field(min_length=1, max_length=20)
-
-
-class TurmaBody(BaseModel):
-    turma: str = Field(default="", max_length=40)
-
-
-class ImportarTurmasBody(BaseModel):
-    linhas: str = Field(default="", max_length=20000)
 
 
 class ConfigBody(BaseModel):
@@ -896,51 +886,6 @@ def consultar_aluno(ra: str, user: dict = Depends(auth.require_admin)):
         "ativos": ativos, "pendentes": pendentes, "atrasos": atrasos,
         "historico": [_emprestimo_dict(r) for r in historico],
     }
-
-
-@app.put("/api/admin/alunos/{ra}/turma")
-def definir_turma(ra: str, body: TurmaBody, user: dict = Depends(auth.require_admin)):
-    """A SED não devolve turma/série no login; a secretaria preenche aqui (uma vez por aluno)."""
-    conn = db.conectar()
-    try:
-        aluno = _aluno_por_ra(conn, ra)
-        if not aluno:
-            raise HTTPException(status_code=404, detail="Aluno não encontrado. Ele precisa ter feito login ao menos uma vez.")
-        turma = " ".join(body.turma.split())[:40]
-        conn.execute("UPDATE alunos SET turma = ? WHERE ra = ?", (turma, aluno["ra"]))
-        conn.commit()
-        return {"ra": aluno["ra"], "nome": aluno["nome"], "turma": turma}
-    finally:
-        conn.close()
-
-
-@app.post("/api/admin/alunos/importar-turmas")
-def importar_turmas(body: ImportarTurmasBody, user: dict = Depends(auth.require_admin)):
-    """Importa turmas em lote. Cada linha: `RA;turma` (aceita vírgula ou tab; ignora nome extra)."""
-    conn = db.conectar()
-    atualizados, nao_encontrados, invalidas = 0, [], 0
-    try:
-        for linha in (body.linhas or "").splitlines():
-            linha = linha.strip()
-            if not linha or linha.lower().startswith(("ra;", "ra,", "ra\t")):
-                continue
-            partes = [p.strip() for p in re.split(r"[;\t,]+", linha) if p.strip()]
-            if len(partes) < 2:
-                invalidas += 1
-                continue
-            # `RA;nome;turma` também funciona: a turma é sempre a última coluna
-            ra, turma = partes[0], partes[-1]
-            aluno = _aluno_por_ra(conn, ra)
-            if not aluno:
-                nao_encontrados.append(sed_client.chave_aluno(ra) or ra)
-                continue
-            conn.execute("UPDATE alunos SET turma = ? WHERE ra = ?", (turma[:40], aluno["ra"]))
-            atualizados += 1
-        conn.commit()
-    finally:
-        conn.close()
-    return {"atualizados": atualizados, "nao_encontrados": nao_encontrados[:20],
-            "nao_encontrados_total": len(nao_encontrados), "linhas_invalidas": invalidas}
 
 
 @app.get("/api/admin/admins")

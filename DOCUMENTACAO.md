@@ -502,26 +502,23 @@ normalmente já sabe o que procura, então grade + filtro continuam sendo o cami
 - **Sem nota inventada**: a prateleira diz que a nota é do catálogo externo. Avaliação dos próprios alunos
   (estrelas + comentário) exigiria tabela nova e ficou fora deste escopo.
 
-## 21. Turma/série do aluno: por que NÃO vem da SED (28/10/2026)
+## 21. Turma/série do aluno: a SED não fornece (28/10/2026)
 
-Testado de ponta a ponta, com prova, na ordem:
+Investigação feita a pedido do Okai para saber se a série/turma podia ser puxada automaticamente de
+`sed.educacao.sp.gov.br/GradeAulaAluno/Index` (GET que devolve HTML, não JSON). Resultado: **não dá**, com
+três provas:
 
 1. **Token da API não abre a área do aluno.** `LoginCompletoToken` devolve um JWT do BFF
-   (`sedintegracoes`, 988 chars) que serve para as APIs, não para o site `sed.educacao.sp.gov.br`.
-   `GET /GradeAulaAluno/Index` com `Authorization: Bearer <jwt>` → **HTTP 200 com 45 KB da home de login**,
-   redirecionando para `https://sed.educacao.sp.gov.br/` — idêntico a pedir sem nada.
-2. **O login por formulário não existe mais.** `GET /Logon/Logon/` devolve 45 KB sem campo `usuario`
-   (só o formulário de "Definir senha"); `POST` com `usuario/senha/tipo=A/__RequestVerificationToken`
-   volta **200 com 0 bytes** e não cria o cookie `SED=...`. A página agora é **SSO gov.br** (barra
-   "Cidadão SP /governosp"), como o risco já registrado no item 2.
-3. **O payload da própria API não traz turma.** `DadosUsuario` tem `CD_USUARIO`, `LOGIN`, `NAME`,
-   `NR_CPF`, `EMAIL`, `EMAIL_GOOGLE`, `EMAIL_MS`, `NM_NICK`, `PERFIS` — nenhum campo de série/turma/escola,
-   e o array `A` veio vazio.
+   (`sedintegracoes`, 988 chars) que vale para as APIs, não para o site. `GET /GradeAulaAluno/Index` com
+   `Authorization: Bearer <jwt>` → **HTTP 200 com 45 KB da home de login**, redirecionando para
+   `https://sed.educacao.sp.gov.br/` — idêntico a pedir sem nada.
+2. **O login por formulário não existe mais.** `GET /Logon/Logon/` devolve 45 KB **sem campo `usuario`**
+   (só o formulário "Definir senha"); `POST` com `usuario/senha/tipo=A/__RequestVerificationToken` volta
+   **200 com 0 bytes** e não cria o cookie `SED=...`. O portal migrou para **SSO gov.br** (barra
+   "Cidadão SP /governosp"), como o risco registrado no item 2.
+3. **O payload da API não traz turma.** `DadosUsuario` só tem `CD_USUARIO`, `LOGIN`, `NAME`, `NR_CPF`,
+   `EMAIL`, `EMAIL_GOOGLE`, `EMAIL_MS`, `NM_NICK`, `PERFIS`; o array `A` veio vazio.
 
-Conclusão: puxar `GradeAulaAluno` exigiria sessão gov.br do aluno, que não temos do lado do servidor.
-
-**Solução adotada (sem scraping e sem gov.br):** a secretaria informa a turma uma vez.
-- `PUT /api/admin/alunos/{ra}/turma` — campo "Turma / série" no painel, ao consultar o aluno.
-- `POST /api/admin/alunos/importar-turmas` — cola em lote `RA;turma` (aceita `;`, `,`, tab e a forma
-  `RA;nome;turma`), com relatório de atualizados e RAs ainda sem login.
-- Turma passa a aparecer nas telas que já a usavam (painel do aluno, listas de empréstimo, CSV).
+Conclusão: dependeria de sessão gov.br do aluno, que não existe do lado do servidor. **Escopo encerrado
+sem implementação** — o Okai decidiu não criar alternativa manual (preenchimento/importação de turma);
+`alunos.turma` continua vazio para quem entra pela SED, e as telas já tratam isso com "—".
