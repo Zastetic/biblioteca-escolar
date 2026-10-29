@@ -197,11 +197,14 @@ r = requests.get(f"{BASE}/api/livros", headers=auth(aluno))
 check("token revogado falha (401)", r.status_code == 401)
 
 print("== 11. Rate limit / lockout ==")
+# O limite é configurável (LOGIN_MAX_TENTATIVAS, default 8): o teste acompanha o valor do servidor.
+LIMITE = int(os.environ.get("LOGIN_MAX_TENTATIVAS", "8"))
 codigos = []
-for i in range(6):
+for i in range(LIMITE + 1):
     r = requests.post(f"{BASE}/api/auth/login", json={"ra": "999999999", "senha": "errada"})
     codigos.append(r.status_code)
-check("5 falhas -> 429 no sexto", codigos[-1] == 429, str(codigos))
+check(f"{LIMITE} falhas -> 429 na seguinte", codigos[-1] == 429, str(codigos))
+check("falhas antes do limite não bloqueiam", all(c in (401, 400) for c in codigos[:-1]), str(codigos))
 
 print("== 12. Config e admins ==")
 r = requests.put(f"{BASE}/api/admin/config", headers=auth(admin), json={
